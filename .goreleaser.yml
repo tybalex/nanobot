@@ -48,4 +48,17 @@ changelog:
       - '^test:'
       - '^ci:'
       - Merge pull request
-      - Merge branch 
+      - Merge branch
+
+brews:
+  - name: nanobot
+    description: 'Nanobot cli'
+    install: |
+      bin.install "nanobot"
+    homepage: 'https://nanobot.ai'
+    skip_upload: false
+    directory: Formula
+    repository:
+      owner: nanobot-ai
+      name: homebrew-tap
+      token: "{{ .Env.GHCR_TOKEN }}"
