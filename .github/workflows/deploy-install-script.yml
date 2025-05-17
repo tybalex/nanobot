@@ -1,6 +1,7 @@
 name: push-install-script
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -16,12 +17,11 @@ jobs:
         with:
           fetch-depth: 0
       - name: Upload to S3
-        uses: jakejarvis/s3-sync-action@v0.5.1
-        env:
-          SOURCE_DIR: scripts/install.sh
-          DEST_DIR: install.sh
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_S3_ENDPOINT: ${{ secrets.AWS_ENDPOINT }}
-          AWS_S3_BUCKET: ${{ secrets.AWS_BUCKET }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
+        uses: ryand56/r2-upload-action@latest
+        with:
+          source-dir: scripts/install.sh
+          destination-dir: install.sh
+          r2-account-id: ${{ secrets.R2_ACCOUNT_ID }}
+          r2-access-key-id: ${{ secrets.R2_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          r2-bucket: ${{ secrets.R2_BUCKET }}
