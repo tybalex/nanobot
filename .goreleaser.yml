@@ -7,9 +7,6 @@ builds:
     env:
       - CGO_ENABLED=0
     binary: nanobot
-    goos:
-      - linux
-      - windows
     goarch:
       - amd64
       - arm64

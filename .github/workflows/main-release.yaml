@@ -30,6 +30,7 @@ jobs:
           args: release --clean --snapshot
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
       - name: Upload to S3
         uses: ryand56/r2-upload-action@latest
         with:
