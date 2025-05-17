@@ -1,6 +1,5 @@
 #!/bin/sh
 set -e
-set -x
 set -o noglob
 
 GITHUB_URL=https://github.com/nanobot-ai/nanobot/releases
