@@ -1,7 +1,7 @@
 version: 2
 dist: releases
 snapshot:
-  version_template: '{{ trimprefix .Summary "v" }}'
+  version_template: '{{ .Summary }}'
 builds:
   - id: default
     env:
@@ -36,7 +36,7 @@ archives:
       - goos: windows
         formats: ['zip']
 checksum:
-  name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'
+  name_template: '{{ .ProjectName }}_v{{ .Version }}_checksums.txt'
 changelog:
   use: github
   sort: asc
