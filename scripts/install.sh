@@ -56,8 +56,8 @@ setup_verify_arch() {
       PLATFORM="linux"
       ;;
     Darwin)
-      PLATFORM="macOS"
-      ARCH=universal
+      PLATFORM="darwin"
+      ARCH=all
       ;;
     Windows)
       PLATFORM="windows"
@@ -79,12 +79,12 @@ setup_verify_arch() {
     x86_64)
       ARCH=x86_64
       ;;
-    # arm64)
-    #   ARCH=arm64
-    #   ;;
-    # aarch64)
-    #   ARCH=arm64
-    #   ;;
+    arm64)
+      ARCH=arm64
+      ;;
+    aarch64)
+      ARCH=arm64
+      ;;
     *)
       fatal "Unsupported architecture $ARCH"
       ;;
