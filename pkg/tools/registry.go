@@ -101,7 +101,7 @@ func (r *Registry) GetClient(ctx context.Context, name string) (*mcp.Client, err
 		}
 	}
 
-	c, err := mcp.NewClient(ctx, name, mcpConfig, clientOpts)
+	c, err := mcp.NewClient(context.Background(), name, mcpConfig, clientOpts)
 	if err != nil {
 		return nil, err
 	}

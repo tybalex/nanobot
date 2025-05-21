@@ -95,7 +95,7 @@ func (s *Stdio) start(ctx context.Context, handler wireHandler) error {
 		log.Messages(ctx, s.server, false, []byte(text))
 		var msg Message
 		if err := json.Unmarshal([]byte(text), &msg); err != nil {
-			log.Errorf(ctx, "failed to unmarshal message: %w", err)
+			log.Errorf(ctx, "failed to unmarshal message: %v", err)
 			continue
 		}
 		go handler(msg)
