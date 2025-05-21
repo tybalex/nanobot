@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -41,8 +42,10 @@ func handle[T any](method string, handler func(ctx context.Context, req mcp.Mess
 			return false, nil
 		}
 		var payload T
-		if err := json.Unmarshal(msg.Params, &payload); err != nil {
-			return false, err
+		if len(msg.Params) > 0 && !bytes.Equal(msg.Params, []byte("null")) {
+			if err := json.Unmarshal(msg.Params, &payload); err != nil {
+				return false, err
+			}
 		}
 		return true, handler(ctx, msg, payload)
 	}
