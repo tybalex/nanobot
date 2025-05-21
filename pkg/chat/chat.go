@@ -72,8 +72,11 @@ func Chat(ctx context.Context, listenAddress string, confirmations *confirm.Serv
 		return scanner.Scan()
 	}
 
-	line := scanner.Text()
 	for next() {
+		line := scanner.Text()
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
 		_, err := c.Call(ctx, types.AgentTool, map[string]any{
 			"prompt": line,
 		}, mcp.CallOption{
