@@ -9,6 +9,8 @@ import (
 	"os/exec"
 	"slices"
 	"strings"
+
+	"github.com/obot-platform/nanobot/pkg/log"
 )
 
 type Client struct {
@@ -33,31 +35,43 @@ type MCPServer struct {
 }
 
 func toHandler(opts ClientOption) MessageHandler {
-	return MessageHandlerFunc(func(ctx context.Context, msg Message) error {
+	return MessageHandlerFunc(func(ctx context.Context, msg Message) {
 		if msg.Method == "sampling/createMessage" && opts.OnSampling != nil {
 			var param CreateMessageRequest
 			if err := json.Unmarshal(msg.Params, &param); err != nil {
-				return fmt.Errorf("failed to unmarshal sampling/createMessage: %w", err)
+				msg.SendUnknownError(ctx, fmt.Errorf("failed to unmarshal sampling/createMessage: %w", err))
+				return
 			}
-			resp, err := opts.OnSampling(ctx, param)
-			if err != nil {
-				return fmt.Errorf("failed to handle sampling/createMessage: %w", err)
-			}
-			return msg.Reply(ctx, resp)
+			go func() {
+				resp, err := opts.OnSampling(ctx, param)
+				if err != nil {
+					msg.SendUnknownError(ctx, fmt.Errorf("failed to handle sampling/createMessage: %w", err))
+					return
+				}
+				err = msg.Reply(ctx, resp)
+				if err != nil {
+					log.Errorf(ctx, "failed to reply to sampling/createMessage: %v", err)
+				}
+			}()
 		} else if msg.Method == "notifications/message" && opts.OnLogging != nil {
 			var param LoggingMessage
 			if err := json.Unmarshal(msg.Params, &param); err != nil {
-				return fmt.Errorf("failed to unmarshal notifications/message: %w", err)
+				msg.SendUnknownError(ctx, fmt.Errorf("failed to unmarshal notifications/message: %w", err))
+				return
 			}
 			if err := opts.OnLogging(ctx, param); err != nil {
-				return fmt.Errorf("failed to handle notifications/message: %w", err)
+				msg.SendUnknownError(ctx, fmt.Errorf("failed to handle notifications/message: %w", err))
+				return
 			}
 		} else if strings.HasPrefix(msg.Method, "notifications/") && opts.OnNotify != nil {
-			return opts.OnNotify(ctx, msg)
+			if err := opts.OnNotify(ctx, msg); err != nil {
+				log.Errorf(ctx, "failed to handle notification: %v", err)
+			}
 		} else if opts.OnMessage != nil {
-			return opts.OnMessage(ctx, msg)
+			if err := opts.OnMessage(ctx, msg); err != nil {
+				log.Errorf(ctx, "failed to handle message: %v", err)
+			}
 		}
-		return nil
 	})
 }
 

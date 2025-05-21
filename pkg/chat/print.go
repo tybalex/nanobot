@@ -4,13 +4,14 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 
 	"github.com/obot-platform/nanobot/pkg/mcp"
 )
 
-func writeData(result mcp.Content) error {
+func writeData(output io.Writer, result mcp.Content) error {
 	data, err := base64.StdEncoding.DecodeString(result.Data)
 	if err != nil {
 		return err
@@ -31,17 +32,17 @@ func writeData(result mcp.Content) error {
 		if result.MIMEType != "" {
 			name += "(" + result.MIMEType + ")"
 		}
-		fmt.Printf("%s written to %s\n", name, filename)
+		_, _ = fmt.Fprintf(output, "%s written to %s\n", name, filename)
 		return nil
 	}
 }
 
-func PrintResult(result *mcp.CallToolResult) error {
+func PrintResult(output io.Writer, result *mcp.CallToolResult) error {
 	for _, out := range result.Content {
 		if out.Text != "" {
-			fmt.Println(out.Text)
+			_, _ = fmt.Fprintln(output, out.Text)
 		} else if out.Data != "" {
-			if err := writeData(out); err != nil {
+			if err := writeData(output, out); err != nil {
 				return err
 			}
 		}

@@ -128,9 +128,32 @@ type EmbeddedResource struct {
 }
 
 type Tool struct {
-	Name        string          `json:"name"`
-	Description string          `json:"description,omitempty"`
-	InputSchema json.RawMessage `json:"inputSchema,omitzero"`
+	Name        string           `json:"name"`
+	Description string           `json:"description,omitempty"`
+	InputSchema json.RawMessage  `json:"inputSchema,omitzero"`
+	Annotations *ToolAnnotations `json:"annotations,omitempty"`
+}
+
+type ToolAnnotations struct {
+	Title           string `json:"title,omitempty"`
+	ReadOnlyHint    bool   `json:"readOnlyHint,omitempty"`
+	DestructiveHint *bool  `json:"destructiveHint,omitempty"`
+	IdempotentHint  bool   `json:"idempotentHint,omitempty"`
+	OpenWorldHint   *bool  `json:"openWorldHint,omitempty"`
+}
+
+func (t ToolAnnotations) IsOpenWorld() bool {
+	if t.OpenWorldHint == nil {
+		return true
+	}
+	return *t.OpenWorldHint
+}
+
+func (t ToolAnnotations) IsDestructive() bool {
+	if t.DestructiveHint == nil {
+		return true
+	}
+	return *t.DestructiveHint
 }
 
 type CallToolResult struct {

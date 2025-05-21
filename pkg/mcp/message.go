@@ -93,6 +93,10 @@ func (r *Message) UID(sessionID string, in bool) string {
 	return fmt.Sprintf("%s::%s::%s", sessionID, id, direction)
 }
 
+func (r *Message) SendUnknownError(ctx context.Context, err error) {
+	r.SendError(ctx, 500, err.Error(), nil)
+}
+
 func (r *Message) SendError(ctx context.Context, code int, message string, data any) {
 	if r.Session == nil {
 		return

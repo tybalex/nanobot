@@ -72,19 +72,7 @@ type TargetMapping struct {
 	Target     any    `json:"target,omitempty"`
 }
 
-type ToolMappings map[string]ToolMapping
-
-type ToolMapping struct {
-	MCPServer string         `json:"mcpServer,omitempty"`
-	ToolName  string         `json:"toolName,omitempty"`
-	Tool      ToolDefinition `json:"tool,omitempty"`
-}
-
-type ToolDefinition struct {
-	Name        string          `json:"name"`
-	Description string          `json:"description,omitempty"`
-	InputSchema json.RawMessage `json:"inputSchema,omitzero"`
-}
+type ToolMappings map[string]TargetMapping
 
 type StringList []string
 
@@ -107,7 +95,7 @@ func (s *StringList) UnmarshalJSON(data []byte) error {
 
 type Agent struct {
 	Description    string                    `json:"description,omitempty"`
-	Instructions   AgentInstructions         `json:"instructions,omitempty"`
+	Instructions   DynamicInstructions       `json:"instructions,omitempty"`
 	Model          string                    `json:"model,omitempty"`
 	Tools          []string                  `json:"tools,omitempty"`
 	History        *bool                     `json:"history,omitempty"`
@@ -127,22 +115,22 @@ type Agent struct {
 	Intelligence float64  `json:"intelligence,omitempty"`
 }
 
-type AgentInstructions struct {
+type DynamicInstructions struct {
 	Instructions string            `json:"-"`
 	MCPServer    string            `json:"mcpServer"`
 	Prompt       string            `json:"prompt"`
 	Args         map[string]string `json:"args"`
 }
 
-func (a AgentInstructions) IsPrompt() bool {
+func (a DynamicInstructions) IsPrompt() bool {
 	return a.MCPServer != "" && a.Prompt != ""
 }
 
-func (a AgentInstructions) IsSet() bool {
+func (a DynamicInstructions) IsSet() bool {
 	return a.IsPrompt() || a.Instructions != ""
 }
 
-func (a *AgentInstructions) UnmarshalJSON(data []byte) error {
+func (a *DynamicInstructions) UnmarshalJSON(data []byte) error {
 	if data[0] == '"' && data[len(data)-1] == '"' {
 		var raw string
 		if err := json.Unmarshal(data, &raw); err != nil {
@@ -151,15 +139,15 @@ func (a *AgentInstructions) UnmarshalJSON(data []byte) error {
 		a.Instructions = raw
 		return nil
 	}
-	type Alias AgentInstructions
+	type Alias DynamicInstructions
 	return json.Unmarshal(data, (*Alias)(a))
 }
 
-func (a AgentInstructions) MarshalJSON() ([]byte, error) {
+func (a DynamicInstructions) MarshalJSON() ([]byte, error) {
 	if a.Instructions != "" {
 		return json.Marshal(a.Instructions)
 	}
-	type Alias AgentInstructions
+	type Alias DynamicInstructions
 	return json.Marshal(Alias(a))
 }
 

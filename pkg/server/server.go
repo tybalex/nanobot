@@ -169,7 +169,7 @@ func (s *Server) handleCallTool(ctx context.Context, msg mcp.Message, payload mc
 		return fmt.Errorf("tool %s not found", payload.Name)
 	}
 
-	result, err := s.runtime.Call(ctx, toolMapping.MCPServer, toolMapping.ToolName, payload.Arguments, mcp.CallOption{
+	result, err := s.runtime.Call(ctx, toolMapping.MCPServer, toolMapping.TargetName, payload.Arguments, mcp.CallOption{
 		ProgressToken: msg.ProgressToken(),
 	})
 	if err != nil {
@@ -186,7 +186,7 @@ func (s *Server) handleListTools(ctx context.Context, msg mcp.Message, _ mcp.Lis
 
 	toolMappings, _ := msg.Session.Get(toolMappingKey).(types.ToolMappings)
 	for _, k := range slices.Sorted(maps.Keys(toolMappings)) {
-		result.Tools = append(result.Tools, mcp.Tool(toolMappings[k].Tool))
+		result.Tools = append(result.Tools, toolMappings[k].Target.(mcp.Tool))
 	}
 
 	return msg.Reply(ctx, result)
@@ -349,11 +349,13 @@ func (s *Server) handleInitialize(ctx context.Context, msg mcp.Message, payload 
 	})
 }
 
-func (s *Server) OnMessage(ctx context.Context, msg mcp.Message) error {
+func (s *Server) OnMessage(ctx context.Context, msg mcp.Message) {
 	for _, h := range s.handlers {
-		if ok, err := h(ctx, msg); err != nil || ok {
-			return err
+		ok, err := h(ctx, msg)
+		if err != nil {
+			msg.SendUnknownError(ctx, err)
+		} else if ok {
+			return
 		}
 	}
-	return nil
 }

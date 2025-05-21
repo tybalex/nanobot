@@ -1,21 +1,32 @@
 package log
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 )
 
 var (
-	EnableMessages    = os.Getenv("NANOBOT_MESSAGES") != "false"
+	debugs            = strings.Split(os.Getenv("NANOBOT_DEBUG"), ",")
+	EnableMessages    = slices.Contains(debugs, "messages")
+	EnableProgress    = slices.Contains(debugs, "progress")
+	DebugLog          = slices.Contains(debugs, "log")
 	Base64Replace     = regexp.MustCompile(`(;base64,[a-zA-Z0-9+/=]{0,12})[a-zA-Z0-9+/=]+"`)
 	Base64Replacement = []byte(`$1..."`)
 )
 
 func Messages(_ context.Context, server string, out bool, data []byte) {
-	if !EnableMessages {
+	if EnableProgress && bytes.Contains(data, []byte(`"notifications/progress"`)) {
+	} else if EnableMessages && !bytes.Contains(data, []byte(`"notifications/progress"`)) {
+	} else {
+		return
+	}
+
+	if !EnableProgress && bytes.Contains(data, []byte(`"notifications/progress"`)) {
 		return
 	}
 
@@ -28,13 +39,16 @@ func Messages(_ context.Context, server string, out bool, data []byte) {
 }
 
 func Errorf(_ context.Context, format string, args ...any) {
-	_, _ = fmt.Fprintf(os.Stderr, format+"\n", args...)
+	_, _ = fmt.Fprintf(os.Stderr, "ERROR: "+format+"\n", args...)
 }
 
 func Infof(_ context.Context, format string, args ...any) {
-	_, _ = fmt.Fprintf(os.Stderr, format+"\n", args...)
+	_, _ = fmt.Fprintf(os.Stderr, "INFO: "+format+"\n", args...)
 }
 
 func Debugf(_ context.Context, format string, args ...any) {
-	//_, _ = fmt.Fprintf(os.Stderr, format+"\n", args...)
+	if !DebugLog {
+		return
+	}
+	_, _ = fmt.Fprintf(os.Stderr, format+"\n", args...)
 }

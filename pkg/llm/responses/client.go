@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/obot-platform/nanobot/pkg/log"
@@ -121,7 +120,7 @@ func (c *Client) complete(ctx context.Context, req Request, opts ...types.Comple
 			body = strings.TrimSpace(body)
 			data := []byte(body)
 			if err := json.Unmarshal(data, &event); err != nil {
-				_, _ = fmt.Fprintf(os.Stderr, "failed to decode event: %w\n%s", err, body)
+				log.Errorf(ctx, "failed to decode event: %v: %s", err, body)
 				continue
 			}
 			if opt.Progress != nil {

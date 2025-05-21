@@ -264,6 +264,7 @@ func toolCallResultToInputItems(completion *types.CompletionRequest, toolCallRes
 			} else {
 				fcOutput = fcOutputImage(toolCallResult.CallID, output.ToImageURL())
 			}
+			result = append(result, *fcOutput)
 			continue
 		}
 

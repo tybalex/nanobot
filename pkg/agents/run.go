@@ -8,15 +8,17 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/obot-platform/nanobot/pkg/confirm"
 	"github.com/obot-platform/nanobot/pkg/mcp"
 	"github.com/obot-platform/nanobot/pkg/tools"
 	"github.com/obot-platform/nanobot/pkg/types"
 )
 
 type Agents struct {
-	config    types.Config
-	completer types.Completer
-	registry  *tools.Registry
+	config        types.Config
+	completer     types.Completer
+	registry      *tools.Registry
+	confirmations *confirm.Service
 }
 
 type ToolListOptions struct {
@@ -24,11 +26,12 @@ type ToolListOptions struct {
 	Names    []string
 }
 
-func New(completer types.Completer, registry *tools.Registry, config types.Config) *Agents {
+func New(completer types.Completer, registry *tools.Registry, confirmations *confirm.Service, config types.Config) *Agents {
 	return &Agents{
-		config:    config,
-		completer: completer,
-		registry:  registry,
+		config:        config,
+		completer:     completer,
+		registry:      registry,
+		confirmations: confirmations,
 	}
 }
 
@@ -41,10 +44,11 @@ func (a *Agents) addTools(ctx context.Context, req *types.CompletionRequest, age
 	for _, key := range slices.Sorted(maps.Keys(toolMappings)) {
 		toolMapping := toolMappings[key]
 
+		tool := toolMapping.Target.(mcp.Tool)
 		req.Tools = append(req.Tools, types.ToolUseDefinition{
 			Name:        key,
-			Parameters:  toolMapping.Tool.InputSchema,
-			Description: toolMapping.Tool.Description,
+			Parameters:  tool.InputSchema,
+			Description: tool.Description,
 			Attributes:  agent.ToolExtensions[key],
 		})
 	}
@@ -79,7 +83,7 @@ func (a *Agents) populateRequest(ctx context.Context, run *run, previousRun *run
 	}
 
 	if req.SystemPrompt != "" {
-		var agentInstructions types.AgentInstructions
+		var agentInstructions types.DynamicInstructions
 		if err := json.Unmarshal([]byte(strings.TrimSpace(req.SystemPrompt)), &agentInstructions); err == nil &&
 			agentInstructions.IsPrompt() {
 			req.SystemPrompt = ""

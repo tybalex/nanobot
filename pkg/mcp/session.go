@@ -6,18 +6,17 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/obot-platform/nanobot/pkg/log"
 	"github.com/obot-platform/nanobot/pkg/uuid"
 )
 
 type MessageHandler interface {
-	OnMessage(ctx context.Context, msg Message) error
+	OnMessage(ctx context.Context, msg Message)
 }
 
-type MessageHandlerFunc func(ctx context.Context, msg Message) error
+type MessageHandlerFunc func(ctx context.Context, msg Message)
 
-func (f MessageHandlerFunc) OnMessage(ctx context.Context, msg Message) error {
-	return f(ctx, msg)
+func (f MessageHandlerFunc) OnMessage(ctx context.Context, msg Message) {
+	f(ctx, msg)
 }
 
 type wire interface {
@@ -141,6 +140,17 @@ func (s *Session) Wait() {
 	s.wire.Wait()
 }
 
+func (s *Session) SendPayload(ctx context.Context, method string, payload any) error {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal payload: %w", err)
+	}
+	return s.Send(ctx, Message{
+		Method: method,
+		Params: data,
+	})
+}
+
 func (s *Session) Send(ctx context.Context, req Message) error {
 	if s.wire == nil {
 		return fmt.Errorf("empty session: wire is not initialized")
@@ -234,14 +244,7 @@ func (s *Session) onWire(message Message) {
 	if s.pendingRequest.notify(message) {
 		return
 	}
-	if err := s.handler.OnMessage(s.ctx, message); err != nil {
-		if message.IsRequest() {
-			message.SendError(s.ctx, 500, err.Error(), nil)
-		} else {
-			log.Errorf(s.ctx, "failed to handle message %s: %v", message.ID, err)
-		}
-	}
-	return
+	s.handler.OnMessage(s.ctx, message)
 }
 
 func NewEmptySession(ctx context.Context, sessionID string) *Session {

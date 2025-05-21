@@ -1296,3 +1296,14 @@ func (r Response) MarshalJSON() ([]byte, error) {
 	type Alias Response
 	return json.Marshal((Alias)(r))
 }
+
+type Progress struct {
+	Type  string       `json:"type,omitempty"`
+	Delta string       `json:"delta,omitempty"`
+	Item  ProgressItem `json:"item,omitempty"`
+}
+
+type ProgressItem struct {
+	Type string `json:"type,omitempty"`
+	Name string `json:"name,omitempty"`
+}

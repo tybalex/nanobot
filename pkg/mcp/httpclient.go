@@ -155,7 +155,7 @@ func (s *HTTPClient) startSSE(ctx context.Context, msg *Message) error {
 				continue
 			}
 			log.Messages(ctx, s.serverName, false, []byte(message))
-			go s.handler(msg)
+			s.handler(msg)
 		}
 	}()
 

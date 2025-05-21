@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/obot-platform/nanobot/pkg/chat"
+	"github.com/obot-platform/nanobot/pkg/confirm"
 	"github.com/obot-platform/nanobot/pkg/log"
 	"github.com/obot-platform/nanobot/pkg/mcp"
 	"github.com/obot-platform/nanobot/pkg/runtime"
@@ -19,7 +20,9 @@ import (
 )
 
 type Run struct {
-	MCP           bool   `usage:"Run the nanobot as an MCP server" default:"false" short:"m"`
+	MCP           bool   `usage:"Run the nanobot as an MCP server" default:"false" short:"m" env:"NANOBOT_MCP"`
+	AutoConfirm   bool   `usage:"Automatically confirm all tool calls" default:"false" short:"y"`
+	Output        string `usage:"Output file for the result. Use - for stdout" default:"" short:"o"`
 	ListenAddress string `usage:"Address to listen on (ex: localhost:8099)" default:"stdio" short:"a"`
 	n             *Nanobot
 }
@@ -37,21 +40,42 @@ func (r *Run) Customize(cmd *cobra.Command) {
   # Run the nanobot.yaml in the current directory
   nanobot run .
 
-  # Run a custom config file in another directory with a custom address using HTTP instead of stdio.
-  # Note: The current working directory of nanobot will be changed to ./other/path
-  nanobot run ./other/path/custom.yaml --address localhost:8099
+  # Run the nanobot.yaml in the GitHub repo github.com/example/nanobot
+  nanobot run example/nanobot
+
+  # Run the nanobot.yaml at the URL
+  nanobot run https://....
+
+  # Run a single prompt and exit
+  nanobot run . Talk like a pirate
+
+  # Run the nanobot as a MCP Server
+  nanobot run --mcp
 `
 	cmd.Args = cobra.MinimumNArgs(1)
 }
 
 func (r *Run) Run(cmd *cobra.Command, args []string) error {
-	runtime, err := r.n.GetRuntime(args[0])
-	if err != nil {
-		return err
+	if r.MCP {
+		runtime, err := r.n.GetRuntime(args[0])
+		if err != nil {
+			return err
+		}
+
+		return r.runMCP(cmd.Context(), runtime, nil)
 	}
 
-	if r.MCP {
-		return r.runMCP(cmd.Context(), runtime, nil)
+	var (
+		runtimeOpt = runtime.Options{
+			Confirmations: confirm.NewService(),
+		}
+	)
+
+	runtimeOpt.Confirmations.Start(context.Background())
+
+	runtime, err := r.n.GetRuntime(args[0], runtimeOpt)
+	if err != nil {
+		return err
 	}
 
 	l, err := net.Listen("tcp", "localhost:0")
@@ -67,7 +91,8 @@ func (r *Run) Run(cmd *cobra.Command, args []string) error {
 	})
 	eg.Go(func() error {
 		defer cancel()
-		return chat.Chat(ctx, r.ListenAddress, strings.Join(args[1:], " "))
+		return chat.Chat(ctx, r.ListenAddress, runtimeOpt.Confirmations, r.AutoConfirm,
+			strings.Join(args[1:], " "), r.Output)
 	})
 	return eg.Wait()
 }

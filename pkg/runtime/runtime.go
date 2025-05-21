@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/obot-platform/nanobot/pkg/agents"
+	"github.com/obot-platform/nanobot/pkg/confirm"
 	"github.com/obot-platform/nanobot/pkg/llm"
 	"github.com/obot-platform/nanobot/pkg/mcp"
 	"github.com/obot-platform/nanobot/pkg/sampling"
@@ -21,10 +22,28 @@ type Runtime struct {
 	sessionID string
 }
 
-func NewRuntime(env map[string]string, cfg llm.Config, config types.Config) *Runtime {
+type Options struct {
+	Confirmations *confirm.Service
+}
+
+func completeOptions(opts ...Options) Options {
+	var options Options
+	for _, opt := range opts {
+		if opt.Confirmations != nil {
+			if options.Confirmations != nil {
+				panic("multiple confirmation services provided")
+			}
+			options.Confirmations = opt.Confirmations
+		}
+	}
+	return options
+}
+
+func NewRuntime(env map[string]string, cfg llm.Config, config types.Config, opts ...Options) *Runtime {
+	opt := completeOptions(opts...)
 	completer := llm.NewClient(cfg, config)
 	registry := tools.NewRegistry(env, config)
-	agents := agents.New(completer, registry, config)
+	agents := agents.New(completer, registry, opt.Confirmations, config)
 	sampler := sampling.NewSampler(config, agents)
 
 	// This is a circular dependency. Oh well, so much for good design.

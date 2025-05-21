@@ -268,10 +268,10 @@ func (r *Registry) getMatches(ref string, tools []ListToolsResult) types.ToolMap
 				if toolRef.As != "" {
 					tool.Name = toolRef.As
 				}
-				result[tool.Name] = types.ToolMapping{
-					MCPServer: toolRef.Server,
-					ToolName:  originalName,
-					Tool:      types.ToolDefinition(tool),
+				result[tool.Name] = types.TargetMapping{
+					MCPServer:  toolRef.Server,
+					TargetName: originalName,
+					Target:     tool,
 				}
 			}
 		}
@@ -280,7 +280,7 @@ func (r *Registry) getMatches(ref string, tools []ListToolsResult) types.ToolMap
 	return result
 }
 
-func (r *Registry) GetEntryPoint(ctx context.Context, existingTools types.ToolMappings) (types.ToolMapping, error) {
+func (r *Registry) GetEntryPoint(ctx context.Context, existingTools types.ToolMappings) (types.TargetMapping, error) {
 	if tm, ok := existingTools[types.AgentTool]; ok {
 		return tm, nil
 	}
@@ -307,18 +307,18 @@ func (r *Registry) GetEntryPoint(ctx context.Context, existingTools types.ToolMa
 					Params: data,
 				})
 			}
-			return types.ToolMapping{}, err
+			return types.TargetMapping{}, err
 		}
 	}
 
 	tools, err := r.listToolsForReferences(ctx, []string{entrypoint})
 	if err != nil {
-		return types.ToolMapping{}, err
+		return types.TargetMapping{}, err
 	}
 
 	agents := r.getMatches(entrypoint, tools)
 	if len(agents) != 1 {
-		return types.ToolMapping{}, fmt.Errorf("expected one agent for entrypoint %s, got %d", entrypoint, len(agents))
+		return types.TargetMapping{}, fmt.Errorf("expected one agent for entrypoint %s, got %d", entrypoint, len(agents))
 	}
 	for _, v := range agents {
 		return v, nil

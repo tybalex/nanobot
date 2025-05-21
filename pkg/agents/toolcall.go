@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/obot-platform/nanobot/pkg/mcp"
 	"github.com/obot-platform/nanobot/pkg/types"
 )
 
@@ -27,7 +28,7 @@ func (a *Agents) toolCalls(ctx context.Context, run *run) error {
 
 		callOutput, err := a.invoke(ctx, targetServer, functionCall)
 		if err != nil {
-			return fmt.Errorf("failed to invoke tool %s on MCP server %s: %w", functionCall.Name, targetServer, err)
+			return fmt.Errorf("failed to invoke tool %s on MCP server %s: %w", functionCall.Name, targetServer.MCPServer, err)
 		}
 
 		if run.ToolOutputs == nil {
@@ -47,7 +48,18 @@ func (a *Agents) toolCalls(ctx context.Context, run *run) error {
 	return nil
 }
 
-func (a *Agents) invoke(ctx context.Context, target types.ToolMapping, funcCall *types.ToolCall) ([]types.CompletionInput, error) {
+func (a *Agents) confirm(ctx context.Context, target types.TargetMapping, funcCall *types.ToolCall) error {
+	if a.confirmations == nil {
+		return nil
+	}
+	session := mcp.SessionFromContext(ctx)
+	if session == nil {
+		return nil
+	}
+	return a.confirmations.Confirm(ctx, session, target, funcCall)
+}
+
+func (a *Agents) invoke(ctx context.Context, target types.TargetMapping, funcCall *types.ToolCall) ([]types.CompletionInput, error) {
 	var (
 		data map[string]any
 	)
@@ -59,9 +71,13 @@ func (a *Agents) invoke(ctx context.Context, target types.ToolMapping, funcCall 
 		}
 	}
 
-	response, err := a.registry.Call(ctx, target.MCPServer, target.ToolName, data)
+	if err := a.confirm(ctx, target, funcCall); err != nil {
+		return nil, fmt.Errorf("failed to confirm tool call: %w", err)
+	}
+
+	response, err := a.registry.Call(ctx, target.MCPServer, target.TargetName, data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to invoke tool %s on mcp server %s: %w", target.Tool, target.MCPServer, err)
+		return nil, fmt.Errorf("failed to invoke tool %s on mcp server %s: %w", target.TargetName, target.MCPServer, err)
 	}
 
 	return []types.CompletionInput{

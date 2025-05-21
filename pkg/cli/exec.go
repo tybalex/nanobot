@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"os"
+
 	"github.com/obot-platform/nanobot/pkg/chat"
 	"github.com/spf13/cobra"
 )
@@ -52,5 +54,5 @@ func (e *Exec) Run(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	return chat.PrintResult(result)
+	return chat.PrintResult(os.Stdout, result)
 }
