@@ -60,6 +60,18 @@ func Load(path string) (*types.Config, string, error) {
 	if err := checkDup(seen, "agent", slices.Collect(maps.Keys(last.Agents))); err != nil {
 		return nil, "", err
 	}
+	if len(last.Agents) > 1 && last.Publish.Entrypoint == "" {
+		keys := slices.Sorted(maps.Keys(last.Agents))
+		return nil, "", fmt.Errorf("multiple agents defined, but no entrypoint specified, " +
+			"please specify one in nanobot.yaml, for example:\n" +
+			"\n" +
+			"  publish:\n" +
+			"    entrypoint: " + keys[0] + "\n" +
+			"  agents:\n" +
+			"    " + keys[0] + ": ...\n" +
+			"    " + keys[1] + ": ...\n")
+
+	}
 
 	return &last, dir, nil
 }

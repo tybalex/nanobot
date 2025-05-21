@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/obot-platform/nanobot/pkg/log"
 )
 
 type HTTPClient struct {
@@ -19,6 +21,7 @@ type HTTPClient struct {
 	handler     wireHandler
 	baseURL     string
 	messageURL  string
+	serverName  string
 	headers     map[string]string
 	input       io.ReadCloser
 	waiter      *waiter
@@ -26,10 +29,11 @@ type HTTPClient struct {
 	initialized bool
 }
 
-func NewHTTPClient(baseURL string, headers map[string]string) *HTTPClient {
+func NewHTTPClient(serverName, baseURL string, headers map[string]string) *HTTPClient {
 	return &HTTPClient{
 		baseURL:    baseURL,
 		messageURL: baseURL,
+		serverName: serverName,
 		headers:    maps.Clone(headers),
 		waiter:     newWaiter(),
 	}
@@ -54,6 +58,7 @@ func (s *HTTPClient) newRequest(ctx context.Context, method string, in any) (*ht
 			return nil, fmt.Errorf("failed to marshal message: %w", err)
 		}
 		body = bytes.NewBuffer(data)
+		log.Messages(ctx, s.serverName, true, data)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, method, s.messageURL, body)
@@ -81,9 +86,9 @@ func (s *HTTPClient) startSSE(ctx context.Context, msg *Message) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		_ = resp.Body.Close()
 		return fmt.Errorf("failed to connect to SSE server: %s", resp.Status)
 	}
 
@@ -149,6 +154,7 @@ func (s *HTTPClient) startSSE(ctx context.Context, msg *Message) error {
 			if err := json.Unmarshal([]byte(message), &msg); err != nil {
 				continue
 			}
+			log.Messages(ctx, s.serverName, false, []byte(message))
 			go s.handler(msg)
 		}
 	}()

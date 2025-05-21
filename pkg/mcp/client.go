@@ -8,160 +8,8 @@ import (
 	"os"
 	"os/exec"
 	"slices"
-
-	"github.com/obot-platform/nanobot/pkg/types"
+	"strings"
 )
-
-type ClientCapabilities struct {
-	Roots    RootsCapability `json:"roots,omitzero"`
-	Sampling *struct{}       `json:"sampling,omitzero"`
-}
-
-type RootsCapability struct {
-	ListChanged bool `json:"listChanged"`
-}
-
-type ClientInfo struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
-}
-
-type ServerCapabilities struct {
-	Logging   *struct{}                  `json:"logging,omitempty"`
-	Prompts   *PromptsServerCapability   `json:"prompts,omitempty"`
-	Resources *ResourcesServerCapability `json:"resources,omitempty"`
-	Tools     *ToolsServerCapability     `json:"tools,omitempty"`
-}
-
-type ToolsServerCapability struct {
-	ListChanged bool `json:"listChanged"`
-}
-
-type PromptsServerCapability struct {
-	ListChanged bool `json:"listChanged"`
-}
-
-type ResourcesServerCapability struct {
-	Subscribe   bool `json:"subscribe"`
-	ListChanged bool `json:"listChanged"`
-}
-
-type ServerInfo struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
-}
-
-type InitializeResult struct {
-	ProtocolVersion string             `json:"protocolVersion"`
-	Capabilities    ServerCapabilities `json:"capabilities"`
-	ServerInfo      ServerInfo         `json:"serverInfo"`
-	Instructions    string             `json:"instructions"`
-}
-
-type InitializeRequest struct {
-	ProtocolVersion string             `json:"protocolVersion"`
-	Capabilities    ClientCapabilities `json:"capabilities"`
-	ClientInfo      ClientInfo         `json:"clientInfo"`
-}
-
-type PingRequest struct {
-}
-
-type PingResult struct {
-}
-
-type ModelPreferences struct {
-	Hints                []ModelHint `json:"hints,omitzero"`
-	CostPriority         *float64    `json:"costPriority"`
-	SpeedPriority        *float64    `json:"speedPriority"`
-	IntelligencePriority *float64    `json:"intelligencePriority"`
-}
-
-type ModelHint struct {
-	Name string `json:"name"`
-}
-type CreateMessageRequest struct {
-	Messages         []SamplingMessage `json:"messages,omitzero"`
-	ModelPreferences ModelPreferences  `json:"modelPreferences,omitzero"`
-	SystemPrompt     string            `json:"systemPrompt,omitzero"`
-	IncludeContext   string            `json:"includeContext,omitempty"`
-	MaxTokens        int               `json:"maxTokens,omitempty"`
-	Temperature      *json.Number      `json:"temperature,omitempty"`
-	StopSequences    []string          `json:"stopSequences,omitzero"`
-	Metadata         map[string]any    `json:"metadata,omitempty"`
-}
-
-type SamplingMessage struct {
-	Role    string  `json:"role,omitempty"`
-	Content Content `json:"content,omitempty"`
-}
-
-type CreateMessageResult struct {
-	Content    Content `json:"content,omitempty"`
-	Role       string  `json:"role,omitempty"`
-	Model      string  `json:"model,omitempty"`
-	StopReason string  `json:"stopReason,omitempty"`
-}
-
-type Content struct {
-	Type string `json:"type,omitempty"`
-
-	// Text is set when type is "text"
-	Text string `json:"text,omitempty"`
-
-	// Data is set when type is "image" or "audio"
-	Data string `json:"data,omitempty"`
-	// MIMEType is set when type is "image" or "audio"
-	MIMEType string `json:"mimeType,omitempty"`
-
-	// Resource is set when type is "resource"
-	Resource *Resource `json:"resource,omitempty"`
-}
-
-func (c *Content) ToImageURL() string {
-	return "data:" + c.MIMEType + ";base64," + c.Data
-}
-
-type Resource struct {
-	URI      string `json:"uri,omitempty"`
-	MIMEType string `json:"mimeType,omitempty"`
-	Text     string `json:"text,omitempty"`
-	Blob     string `json:"blob,omitempty"`
-}
-
-type Tool struct {
-	Name        string          `json:"name"`
-	Description string          `json:"description,omitempty"`
-	InputSchema json.RawMessage `json:"inputSchema,omitzero"`
-}
-
-type CallToolResult struct {
-	IsError bool      `json:"isError"`
-	Content []Content `json:"content,omitzero"`
-}
-
-type CallToolRequest struct {
-	Name      string         `json:"name"`
-	Arguments map[string]any `json:"arguments,omitempty"`
-}
-
-type ListToolsRequest struct {
-}
-
-type ListToolsResult struct {
-	Tools []Tool `json:"tools"`
-}
-
-type Notification struct {
-}
-
-type NotificationProgressRequest struct {
-	ProgressToken any          `json:"progressToken"`
-	Progress      json.Number  `json:"progress"`
-	Total         *json.Number `json:"total,omitempty"`
-	Message       string       `json:"message,omitempty"`
-	Data          any          `json:"data,omitzero"`
-}
 
 type Client struct {
 	Session *Session
@@ -169,9 +17,19 @@ type Client struct {
 
 type ClientOption struct {
 	OnSampling func(ctx context.Context, sampling CreateMessageRequest) (CreateMessageResult, error)
+	OnLogging  func(ctx context.Context, logMsg LoggingMessage) error
 	OnMessage  func(ctx context.Context, msg Message) error
+	OnNotify   func(ctx context.Context, msg Message) error
 	Env        map[string]string
 	SessionID  string
+}
+
+type MCPServer struct {
+	Env     map[string]string `json:"env,omitempty"`
+	Command string            `json:"command,omitempty"`
+	Args    []string          `json:"args,omitempty"`
+	BaseURL string            `json:"baseURL,omitempty"`
+	Headers map[string]string `json:"headers,omitempty"`
 }
 
 func toHandler(opts ClientOption) MessageHandler {
@@ -186,6 +44,16 @@ func toHandler(opts ClientOption) MessageHandler {
 				return fmt.Errorf("failed to handle sampling/createMessage: %w", err)
 			}
 			return msg.Reply(ctx, resp)
+		} else if msg.Method == "notifications/message" && opts.OnLogging != nil {
+			var param LoggingMessage
+			if err := json.Unmarshal(msg.Params, &param); err != nil {
+				return fmt.Errorf("failed to unmarshal notifications/message: %w", err)
+			}
+			if err := opts.OnLogging(ctx, param); err != nil {
+				return fmt.Errorf("failed to handle notifications/message: %w", err)
+			}
+		} else if strings.HasPrefix(msg.Method, "notifications/") && opts.OnNotify != nil {
+			return opts.OnNotify(ctx, msg)
 		} else if opts.OnMessage != nil {
 			return opts.OnMessage(ctx, msg)
 		}
@@ -202,11 +70,23 @@ func complete(opts ...ClientOption) ClientOption {
 			}
 			all.OnSampling = opt.OnSampling
 		}
+		if opt.OnNotify != nil {
+			if all.OnNotify != nil {
+				panic("multiple OnNotify handlers provided")
+			}
+			all.OnNotify = opt.OnNotify
+		}
 		if opt.OnMessage != nil {
 			if all.OnMessage != nil {
 				panic("multiple OnMessage handlers provided")
 			}
 			all.OnMessage = opt.OnMessage
+		}
+		if opt.OnLogging != nil {
+			if all.OnLogging != nil {
+				panic("multiple OnLogging handlers provided")
+			}
+			all.OnLogging = opt.OnLogging
 		}
 		if len(opt.Env) > 0 {
 			if all.Env == nil {
@@ -262,7 +142,7 @@ func replaceEnv(envs map[string]string, command string, args []string, env map[s
 	return replaceString(envs, command), newArgs, newEnv
 }
 
-func NewSession(ctx context.Context, serverName string, config types.MCPServer, opts ...ClientOption) (*Session, error) {
+func NewSession(ctx context.Context, serverName string, config MCPServer, opts ...ClientOption) (*Session, error) {
 	var (
 		wire wire
 		err  error
@@ -280,7 +160,7 @@ func NewSession(ctx context.Context, serverName string, config types.MCPServer, 
 				return nil, err
 			}
 		}
-		wire = NewHTTPClient(config.BaseURL, headers)
+		wire = NewHTTPClient(serverName, config.BaseURL, headers)
 	} else {
 		wire, err = newStdioClient(ctx, serverName, cmd, args, env)
 		if err != nil {
@@ -302,7 +182,7 @@ func runCommand(ctx context.Context, cmd string, args []string, env []string) er
 	return nil
 }
 
-func NewClient(ctx context.Context, serverName string, config types.MCPServer, opts ...ClientOption) (*Client, error) {
+func NewClient(ctx context.Context, serverName string, config MCPServer, opts ...ClientOption) (*Client, error) {
 	var (
 		opt = complete(opts...)
 	)
@@ -337,7 +217,52 @@ func (c *Client) Initialize(ctx context.Context, param InitializeRequest) (resul
 			Method: "notifications/initialized",
 		})
 	}
+	c.Session.ServerCapabilities = &result.Capabilities
 	return
+}
+
+func (c *Client) ReadResource(ctx context.Context, uri string) (*ReadResourceResult, error) {
+	var result ReadResourceResult
+	err := c.Session.Exchange(ctx, "resources/read", ReadResourceRequest{
+		URI: uri,
+	}, &result)
+	return &result, err
+}
+
+func (c *Client) ListResourceTemplates(ctx context.Context) (*ListResourceTemplatesResult, error) {
+	var result ListResourceTemplatesResult
+	if c.Session.ServerCapabilities == nil || c.Session.ServerCapabilities.Resources == nil {
+		return &result, nil
+	}
+	err := c.Session.Exchange(ctx, "resources/templates/list", struct{}{}, &result)
+	return &result, err
+}
+
+func (c *Client) ListResources(ctx context.Context) (*ListResourcesResult, error) {
+	var result ListResourcesResult
+	if c.Session.ServerCapabilities == nil || c.Session.ServerCapabilities.Resources == nil {
+		return &result, nil
+	}
+	err := c.Session.Exchange(ctx, "resources/list", struct{}{}, &result)
+	return &result, err
+}
+
+func (c *Client) ListPrompts(ctx context.Context) (*ListPromptsResult, error) {
+	var prompts ListPromptsResult
+	if c.Session.ServerCapabilities == nil || c.Session.ServerCapabilities.Prompts == nil {
+		return &prompts, nil
+	}
+	err := c.Session.Exchange(ctx, "prompts/list", struct{}{}, &prompts)
+	return &prompts, err
+}
+
+func (c *Client) GetPrompt(ctx context.Context, name string, args map[string]string) (*GetPromptResult, error) {
+	var result GetPromptResult
+	err := c.Session.Exchange(ctx, "prompts/get", GetPromptRequest{
+		Name:      name,
+		Arguments: args,
+	}, &result)
+	return &result, err
 }
 
 func (c *Client) ListTools(ctx context.Context) (*ListToolsResult, error) {

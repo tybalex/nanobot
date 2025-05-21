@@ -1,13 +1,7 @@
 package cli
 
 import (
-	"encoding/base64"
-	"errors"
-	"fmt"
-	"io/fs"
-	"os"
-
-	"github.com/obot-platform/nanobot/pkg/mcp"
+	"github.com/obot-platform/nanobot/pkg/chat"
 	"github.com/spf13/cobra"
 )
 
@@ -24,6 +18,7 @@ func NewExec(n *Nanobot) *Exec {
 }
 
 func (e *Exec) Customize(cmd *cobra.Command) {
+	cmd.Hidden = true
 	cmd.Use = "exec [flags] NANOBOT_CONFIG TOOL_NAME|AGENT_NAME [AGENT PROMPT]"
 	cmd.Short = "Execute a single tool or agent in the nanobot"
 	cmd.Example = `
@@ -38,32 +33,6 @@ func (e *Exec) Customize(cmd *cobra.Command) {
   nanobot exec . agent1 "What is the weather like today?"
 `
 	cmd.Args = cobra.MinimumNArgs(2)
-}
-
-func writeData(result mcp.Content) error {
-	data, err := base64.StdEncoding.DecodeString(result.Data)
-	if err != nil {
-		return err
-	}
-	i := 1
-	for {
-		filename := fmt.Sprintf("output%d.data", i)
-		_, err := os.Stat(filename)
-		if !errors.Is(err, fs.ErrNotExist) {
-			i++
-			continue
-		}
-
-		if err := os.WriteFile(filename, data, 0644); err != nil {
-			return err
-		}
-		name := result.Type
-		if result.MIMEType != "" {
-			name += "(" + result.MIMEType + ")"
-		}
-		fmt.Printf("%s written to %s\n", name, filename)
-		return nil
-	}
 }
 
 func (e *Exec) Run(cmd *cobra.Command, args []string) error {
@@ -83,15 +52,5 @@ func (e *Exec) Run(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	for _, out := range result.Content {
-		if out.Text != "" {
-			fmt.Println(out.Text)
-		} else if out.Data != "" {
-			if err := writeData(out); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+	return chat.PrintResult(result)
 }

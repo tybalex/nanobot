@@ -1,4 +1,4 @@
-package types
+package responses
 
 import (
 	"bytes"
@@ -416,7 +416,7 @@ type Tool struct {
 type CustomTool struct {
 	Type        string          `json:"type,omitempty"`
 	Name        string          `json:"name,omitempty"`
-	Parameters  json.RawMessage `json:"parameters,omitempty"`
+	Parameters  json.RawMessage `json:"parameters,omitzero"`
 	Strict      *bool           `json:"strict,omitempty"`
 	Description string          `json:"description,omitempty"`
 	Attributes  map[string]any  `json:"-"`

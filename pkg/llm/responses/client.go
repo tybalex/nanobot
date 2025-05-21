@@ -1,4 +1,4 @@
-package openai
+package responses
 
 import (
 	"bufio"
@@ -56,28 +56,36 @@ func CompleteCompletionOptions(opts ...types.CompletionOptions) types.Completion
 			}
 			all.Progress = opt.Progress
 		}
-		if opt.Continue {
-			all.Continue = true
-		}
 	}
 	return all
 }
 
-func (c *Client) Complete(ctx context.Context, req types.Request, opts ...types.CompletionOptions) (*types.Response, error) {
+func (c *Client) Complete(ctx context.Context, completionRequest types.CompletionRequest, opts ...types.CompletionOptions) (*types.CompletionResponse, error) {
+	req, err := toRequest(&completionRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.complete(ctx, req, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return toResponse(&completionRequest, resp)
+
+}
+
+func (c *Client) complete(ctx context.Context, req Request, opts ...types.CompletionOptions) (*Response, error) {
 	var (
-		response types.Response
+		response Response
 		opt      = CompleteCompletionOptions(opts...)
-		event    = struct {
-			Type     string         `json:"type"`
-			Response types.Response `json:"response"`
-		}{}
 	)
 
 	req.Stream = &[]bool{true}[0]
 	req.Store = new(bool)
 
 	data, _ := json.Marshal(req)
-	log.Messages(ctx, "llm", true, data)
+	log.Messages(ctx, "responses-api", true, data)
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+"/responses", bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
@@ -106,8 +114,13 @@ func (c *Client) Complete(ctx context.Context, req types.Request, opts ...types.
 		}
 		switch strings.TrimSpace(header) {
 		case "data":
+			event := struct {
+				Type     string   `json:"type"`
+				Response Response `json:"response"`
+			}{}
 			body = strings.TrimSpace(body)
-			if err := json.Unmarshal([]byte(body), &event); err != nil {
+			data := []byte(body)
+			if err := json.Unmarshal(data, &event); err != nil {
 				_, _ = fmt.Fprintf(os.Stderr, "failed to decode event: %w\n%s", err, body)
 				continue
 			}
@@ -115,6 +128,7 @@ func (c *Client) Complete(ctx context.Context, req types.Request, opts ...types.
 				opt.Progress <- []byte(body)
 			}
 			if event.Type == "response.completed" || event.Type == "response.failed" || event.Type == "response.incomplete" {
+				log.Messages(ctx, "responses-api", false, data)
 				response = event.Response
 			}
 		}

@@ -23,6 +23,7 @@ func NewTools(n *Nanobot) *Tools {
 }
 
 func (t *Tools) Customize(cmd *cobra.Command) {
+	cmd.Hidden = true
 	cmd.Short = "List tools the available tools and agents internal to the nanobot"
 	cmd.Aliases = []string{"tool", "t"}
 	cmd.Args = cobra.ExactArgs(1)

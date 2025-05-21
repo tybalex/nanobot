@@ -2,13 +2,15 @@ package types
 
 import "encoding/json"
 
-var AgentInputSchema = []byte(`{
+var AgentTool = "agent"
+
+var ChatInputSchema = []byte(`{
   "type": "object",
   "required": [
     "text"
   ],
   "properties": {
-    "text": {
+    "prompt": {
   	  "description": "The input prompt",
   	  "type": "string"
     },
@@ -22,11 +24,7 @@ var AgentInputSchema = []byte(`{
 	      "url": {
 	        "description": "The URL of the attachment or data URI",
 	        "type": "string"
-	      },
-	      "mimeType": {
-	        "description": "The MIME type of the attachment",
-	        "type": "string"
-		  }
+	      }
 	    }
 	  }
     }
@@ -46,7 +44,7 @@ func Marshal[T any](in any, out *T) error {
 }
 
 type SampleCallRequest struct {
-	Text        string       `json:"text"`
+	Prompt      string       `json:"prompt"`
 	Attachments []Attachment `json:"attachments,omitempty"`
 }
 

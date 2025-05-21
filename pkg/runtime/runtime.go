@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/obot-platform/nanobot/pkg/agents"
+	"github.com/obot-platform/nanobot/pkg/llm"
 	"github.com/obot-platform/nanobot/pkg/mcp"
-	"github.com/obot-platform/nanobot/pkg/openai"
 	"github.com/obot-platform/nanobot/pkg/sampling"
 	"github.com/obot-platform/nanobot/pkg/tools"
 	"github.com/obot-platform/nanobot/pkg/types"
@@ -21,8 +21,8 @@ type Runtime struct {
 	sessionID string
 }
 
-func NewRuntime(env map[string]string, cfg openai.Config, config types.Config) *Runtime {
-	completer := openai.NewClient(cfg, config)
+func NewRuntime(env map[string]string, cfg llm.Config, config types.Config) *Runtime {
+	completer := llm.NewClient(cfg, config)
 	registry := tools.NewRegistry(env, config)
 	agents := agents.New(completer, registry, config)
 	sampler := sampling.NewSampler(config, agents)
@@ -92,9 +92,9 @@ func (r *Runtime) CallFromCLI(ctx context.Context, serverRef string, args ...str
 		return nil, err
 	}
 
-	if bytes.Equal(tools.Tools[0].InputSchema, types.AgentInputSchema) {
+	if bytes.Equal(tools.Tools[0].InputSchema, types.ChatInputSchema) {
 		argValue = types.SampleCallRequest{
-			Text: strings.Join(args, " "),
+			Prompt: strings.Join(args, " "),
 		}
 		args = nil
 	}

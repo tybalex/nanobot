@@ -30,3 +30,11 @@ func Messages(_ context.Context, server string, out bool, data []byte) {
 func Errorf(_ context.Context, format string, args ...any) {
 	_, _ = fmt.Fprintf(os.Stderr, format+"\n", args...)
 }
+
+func Infof(_ context.Context, format string, args ...any) {
+	_, _ = fmt.Fprintf(os.Stderr, format+"\n", args...)
+}
+
+func Debugf(_ context.Context, format string, args ...any) {
+	//_, _ = fmt.Fprintf(os.Stderr, format+"\n", args...)
+}

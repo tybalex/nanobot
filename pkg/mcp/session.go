@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/google/uuid"
 	"github.com/obot-platform/nanobot/pkg/log"
+	"github.com/obot-platform/nanobot/pkg/uuid"
 )
 
 type MessageHandler interface {
@@ -96,6 +96,7 @@ type Session struct {
 	handler            MessageHandler
 	pendingRequest     pendingRequest
 	ClientCapabilities *ClientCapabilities
+	ServerCapabilities *ServerCapabilities
 	recorder           *recorder
 	sessionID          string
 	attributes         map[string]any
@@ -191,7 +192,7 @@ func (s *Session) Exchange(ctx context.Context, method string, in, out any, opts
 	}
 
 	if req.ID == nil || req.ID == "" {
-		req.ID = uuid.New().String()
+		req.ID = uuid.String()
 	}
 	if opt.ProgressToken != nil {
 		if err := req.SetProgressToken(opt.ProgressToken); err != nil {

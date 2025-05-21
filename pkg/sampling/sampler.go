@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
-	"os"
 	"slices"
 	"sort"
-	"sync"
 
 	"github.com/obot-platform/nanobot/pkg/mcp"
 	"github.com/obot-platform/nanobot/pkg/types"
@@ -119,96 +117,28 @@ func (s *Sampler) Sample(ctx context.Context, req mcp.CreateMessageRequest, opts
 		return result, fmt.Errorf("no matching model found")
 	}
 
-	request := types.Request{
+	request := types.CompletionRequest{
 		Model: model,
 	}
 
 	if req.MaxTokens != 0 {
-		request.MaxOutputTokens = &req.MaxTokens
+		request.MaxTokens = req.MaxTokens
 	}
 	if req.SystemPrompt != "" {
-		request.Instructions = &req.SystemPrompt
+		request.SystemPrompt = req.SystemPrompt
 	}
 	if req.Temperature != nil {
 		request.Temperature = req.Temperature
 	}
 
 	for _, content := range req.Messages {
-		switch content.Content.Type {
-		case "text":
-			request.Input.Items = append(request.Input.Items, types.InputItem{
-				Item: &types.Item{
-					InputMessage: &types.InputMessage{
-						Content: types.InputContent{
-							Text: &content.Content.Text,
-						},
-						Role: content.Role,
-					},
-				},
-			})
-		case "image":
-			imageURL := content.Content.ToImageURL()
-			request.Input.Items = append(request.Input.Items, types.InputItem{
-				Item: &types.Item{
-					InputMessage: &types.InputMessage{
-						Content: types.InputContent{
-							InputItemContent: []types.InputItemContent{
-								{
-									InputText: nil,
-									InputImage: &types.InputImage{
-										ImageURL: &imageURL,
-									},
-								},
-							},
-						},
-						Role: content.Role,
-					},
-				},
-			})
-		}
+		request.Input = append(request.Input, types.CompletionInput{
+			Message: &content,
+		})
 	}
 
-	progress := make(chan json.RawMessage)
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
-	defer func() {
-		// This is to ensure that the below goroutine is not running when this function exits
-		close(progress)
-		wg.Wait()
-	}()
-
-	go func() {
-		defer wg.Done()
-		var (
-			delta = struct {
-				Type  string `json:"type"`
-				Delta string `json:"delta,omitempty"`
-			}{}
-			seen bool
-		)
-
-		for msg := range progress {
-			if opt.Progress != nil {
-				opt.Progress <- msg
-			}
-
-			if err := json.Unmarshal(msg, &delta); err == nil && delta.Type == "response.output_text.delta" {
-				if !seen {
-					_, _ = fmt.Fprint(os.Stderr, "<- (completion) ")
-				}
-				seen = true
-				_, _ = fmt.Fprintf(os.Stderr, delta.Delta)
-			}
-		}
-
-		if seen {
-			_, _ = fmt.Fprint(os.Stderr, "\n")
-		}
-	}()
-
 	resp, err := s.completer.Complete(ctx, request, types.CompletionOptions{
-		Progress: progress,
-		Continue: opt.Continue,
+		Progress: opt.Progress,
 	})
 	if err != nil {
 		return result, err
@@ -221,12 +151,7 @@ func (s *Sampler) Sample(ctx context.Context, req mcp.CreateMessageRequest, opts
 			continue
 		}
 		result.Role = output.Message.Role
-		for _, content := range output.Message.Content {
-			if content.OutputText != nil {
-				result.Content.Text = content.OutputText.Text
-				result.Content.Type = "text"
-			}
-		}
+		result.Content = output.Message.Content
 	}
 
 	if result.Content.Type == "" {

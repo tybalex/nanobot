@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/google/uuid"
+	"github.com/obot-platform/nanobot/pkg/uuid"
 )
 
 var _ wire = (*serverWire)(nil)
@@ -13,7 +13,7 @@ func newServerSession(ctx context.Context, handler MessageHandler) (*serverSessi
 	s := &serverWire{
 		read: make(chan Message),
 	}
-	id := uuid.New().String()
+	id := uuid.String()
 	session, err := newSession(ctx, s, handler, id, nil)
 	if err != nil {
 		return nil, err

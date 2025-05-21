@@ -10,7 +10,9 @@ import (
 
 	"github.com/obot-platform/nanobot/pkg/cmd"
 	"github.com/obot-platform/nanobot/pkg/config"
-	"github.com/obot-platform/nanobot/pkg/openai"
+	"github.com/obot-platform/nanobot/pkg/llm"
+	"github.com/obot-platform/nanobot/pkg/llm/anthropic"
+	"github.com/obot-platform/nanobot/pkg/llm/responses"
 	"github.com/obot-platform/nanobot/pkg/runtime"
 	"github.com/obot-platform/nanobot/pkg/version"
 	"github.com/spf13/cobra"
@@ -28,20 +30,23 @@ func New() *cobra.Command {
 }
 
 type Nanobot struct {
-	EmptyEnv      bool              `usage:"Do not load environment variables from the OS"`
-	EnvFile       string            `usage:"Path to the environment file (default: ./nanobot.env)" short:"e"`
-	OpenAIAPIKey  string            `usage:"OpenAI API key" env:"OPENAI_API_KEY" name:"openai-api-key"`
-	OpenAIBaseURL string            `usage:"OpenAI API URL" env:"OPENAI_BASE_URL" name:"openai-base-url"`
-	OpenAIHeaders map[string]string `usage:"OpenAI API headers" env:"OPENAI_HEADERS" name:"openai-headers"`
+	EmptyEnv         bool              `usage:"Do not load environment variables from the OS"`
+	EnvFile          string            `usage:"Path to the environment file (default: ./nanobot.env)" short:"e"`
+	OpenAIAPIKey     string            `usage:"OpenAI API key" env:"OPENAI_API_KEY" name:"openai-api-key"`
+	OpenAIBaseURL    string            `usage:"OpenAI API URL" env:"OPENAI_BASE_URL" name:"openai-base-url"`
+	OpenAIHeaders    map[string]string `usage:"OpenAI API headers" env:"OPENAI_HEADERS" name:"openai-headers"`
+	AnthropicAPIKey  string            `usage:"Anthropic API key" env:"ANTHROPIC_API_KEY" name:"anthropic-api-key"`
+	AnthropicBaseURL string            `usage:"Anthropic API URL" env:"ANTHROPIC_BASE_URL" name:"anthropic-base-url"`
+	AnthropicHeaders map[string]string `usage:"Anthropic API headers" env:"ANTHROPIC_HEADERS" name:"anthropic-headers"`
 }
 
 func (n *Nanobot) Customize(cmd *cobra.Command) {
 	cmd.Short = "Nanobot: MCP Agent Runtime"
-	cmd.Example = `  # Run a Nanobot
-  nanobot run foo/bar
+	cmd.Example = `  # Run the example vibe coder Nanobot
+  nanobot run vibe-coder
 
-  # Install a Nanobot
-  nanobot install foo/bar claude-desktop
+  # Run a nanobot from nanobot.yaml in the local directory
+  nanobot run .
 `
 	cmd.CompletionOptions.HiddenDefaultCmd = true
 	cmd.Version = version.Get().String()
@@ -121,10 +126,17 @@ func (n *Nanobot) GetRuntime(cfgPath string) (*runtime.Runtime, error) {
 		return nil, fmt.Errorf("failed to load environment variables: %w", err)
 	}
 
-	return runtime.NewRuntime(env, openai.Config{
-		APIKey:  n.OpenAIAPIKey,
-		BaseURL: n.OpenAIBaseURL,
-		Headers: n.OpenAIHeaders,
+	return runtime.NewRuntime(env, llm.Config{
+		Responses: responses.Config{
+			APIKey:  n.OpenAIAPIKey,
+			BaseURL: n.OpenAIBaseURL,
+			Headers: n.OpenAIHeaders,
+		},
+		Anthropic: anthropic.Config{
+			APIKey:  n.AnthropicAPIKey,
+			BaseURL: n.AnthropicBaseURL,
+			Headers: n.AnthropicHeaders,
+		},
 	}, *cfg), nil
 }
 

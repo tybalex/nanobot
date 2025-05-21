@@ -39,6 +39,10 @@ func (h *HTTPServer) streamEvents(rw http.ResponseWriter, req *http.Request) {
 
 	session := s.(*serverSession)
 	rw.Header().Set("Content-Type", "text/event-stream")
+	rw.WriteHeader(http.StatusOK)
+	if flusher, ok := rw.(http.Flusher); ok {
+		flusher.Flush()
+	}
 	for {
 		msg, ok := session.Read(req.Context())
 		if !ok {
@@ -50,6 +54,9 @@ func (h *HTTPServer) streamEvents(rw http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			http.Error(rw, "Failed to write message: "+err.Error(), http.StatusInternalServerError)
 			return
+		}
+		if f, ok := rw.(http.Flusher); ok {
+			f.Flush()
 		}
 	}
 }
