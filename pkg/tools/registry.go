@@ -335,28 +335,7 @@ func (r *Registry) GetEntryPoint(ctx context.Context, existingTools types.ToolMa
 
 	entrypoint := r.config.Publish.Entrypoint
 	if entrypoint == "" {
-		if len(r.config.Agents) == 1 {
-			for name := range r.config.Agents {
-				entrypoint = name
-			}
-		} else {
-			keys := slices.Collect(maps.Keys(r.config.Agents))
-			err := fmt.Errorf("no entrypoint specified and multiple agents found %v, please specify one in, for example \n"+
-				"publish:\n"+
-				"  entrypoint: "+keys[0], keys)
-			session := mcp.SessionFromContext(ctx)
-			if session != nil {
-				data, _ := json.Marshal(mcp.LoggingMessage{
-					Level: "error",
-					Data:  err.Error(),
-				})
-				_ = session.Send(ctx, mcp.Message{
-					Method: "notifications/message",
-					Params: data,
-				})
-			}
-			return types.TargetMapping{}, err
-		}
+		return types.TargetMapping{}, fmt.Errorf("no entrypoint specified")
 	}
 
 	tools, err := r.listToolsForReferences(ctx, []string{entrypoint})

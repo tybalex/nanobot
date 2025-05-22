@@ -46,19 +46,6 @@ func NewClient(cfg Config, config types.Config) *Client {
 	}
 }
 
-func CompleteCompletionOptions(opts ...types.CompletionOptions) types.CompletionOptions {
-	var all types.CompletionOptions
-	for _, opt := range opts {
-		if opt.Progress != nil {
-			if all.Progress != nil {
-				panic("multiple progress handlers provided")
-			}
-			all.Progress = opt.Progress
-		}
-	}
-	return all
-}
-
 func (c *Client) Complete(ctx context.Context, completionRequest types.CompletionRequest, opts ...types.CompletionOptions) (*types.CompletionResponse, error) {
 	req, err := toRequest(&completionRequest)
 	if err != nil {
@@ -71,13 +58,12 @@ func (c *Client) Complete(ctx context.Context, completionRequest types.Completio
 	}
 
 	return toResponse(&completionRequest, resp)
-
 }
 
 func (c *Client) complete(ctx context.Context, req Request, opts ...types.CompletionOptions) (*Response, error) {
 	var (
 		response Response
-		opt      = CompleteCompletionOptions(opts...)
+		opt      = types.CompleteCompletionOptions(opts...)
 	)
 
 	req.Stream = &[]bool{true}[0]
@@ -139,7 +125,7 @@ func (c *Client) complete(ctx context.Context, req Request, opts ...types.Comple
 
 	// Check for errors in the response
 	if response.Error != nil {
-		return nil, fmt.Errorf("API error: %s %s", response.Error.Code, response.Error.Message)
+		return nil, fmt.Errorf("responses API error: %s %s", response.Error.Code, response.Error.Message)
 	}
 
 	return &response, nil

@@ -160,7 +160,7 @@ func (a *Agents) Complete(ctx context.Context, req types.CompletionRequest, opts
 		}
 	)
 
-	if stateful && a.config.Agents[req.Model].History != nil && !*a.config.Agents[req.Model].History {
+	if stateful && a.config.Agents[req.Model].ChatHistory != nil && !*a.config.Agents[req.Model].ChatHistory {
 		stateful = false
 	}
 
@@ -173,7 +173,7 @@ func (a *Agents) Complete(ctx context.Context, req types.CompletionRequest, opts
 			return nil, err
 		}
 
-		if err := a.toolCalls(ctx, currentRun); err != nil {
+		if err := a.toolCalls(ctx, currentRun, opts); err != nil {
 			return nil, err
 		}
 

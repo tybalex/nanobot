@@ -28,7 +28,10 @@ func Chat(ctx context.Context, listenAddress string, confirmations *confirm.Serv
 			return handleLog(logMsg, confirmations, autoConfirm)
 		},
 		OnNotify: func(ctx context.Context, msg mcp.Message) error {
-			llm.PrintProgress(msg.Params)
+			if llm.PrintProgress(msg.Params) {
+				return nil
+			}
+			printToolCall(msg.Params)
 			return nil
 		},
 	})
@@ -172,6 +175,34 @@ func handleConfirm(data map[string]any, confirmations *confirm.Service, autoConf
 			always[mcpServer+"/"+toolName] = struct{}{}
 			confirmations.Reply(id, true)
 			return nil
+		}
+	}
+}
+
+func printToolCall(params json.RawMessage) {
+	var toolCall struct {
+		Data struct {
+			Type   string                  `json:"type"`
+			Target types.TargetMapping     `json:"target"`
+			Output []types.CompletionInput `json:"output,omitempty"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(params, &toolCall); err != nil || toolCall.Data.Type != "nanobot/toolcall/output" {
+		return
+	}
+	for _, output := range toolCall.Data.Output {
+		if output.ToolCallResult == nil {
+			continue
+		}
+		for _, content := range output.ToolCallResult.Output.Content {
+			if strings.TrimSpace(content.Text) != "" {
+				for _, line := range strings.Split(content.Text, "\n") {
+					if line == "" {
+						continue
+					}
+					_, _ = fmt.Fprintf(os.Stderr, "* <-(%s) %s\n", toolCall.Data.Target.TargetName, line)
+				}
+			}
 		}
 	}
 

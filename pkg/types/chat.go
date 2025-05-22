@@ -7,7 +7,7 @@ var AgentTool = "agent"
 var ChatInputSchema = []byte(`{
   "type": "object",
   "required": [
-    "text"
+    "prompt"
   ],
   "properties": {
     "prompt": {

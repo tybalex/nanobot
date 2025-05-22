@@ -23,10 +23,13 @@ func NewTools(n *Nanobot) *Tools {
 }
 
 func (t *Tools) Customize(cmd *cobra.Command) {
-	cmd.Hidden = true
 	cmd.Short = "List tools the available tools and agents internal to the nanobot"
 	cmd.Aliases = []string{"tool", "t"}
 	cmd.Args = cobra.ExactArgs(1)
+	cmd.Example = `
+  # List the tools from nanobot.yaml in the current directory
+  nanobot run .
+`
 }
 
 func (t *Tools) Run(cmd *cobra.Command, args []string) error {
@@ -49,7 +52,7 @@ func (t *Tools) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	_, err = tw.Write([]byte("SERVER\tTOOL\tDESCRIPTION\n"))
+	_, err = tw.Write([]byte("MCPSERVER/AGENT\tTOOL\tDESCRIPTION\n"))
 	if err != nil {
 		return err
 	}

@@ -1,3 +1,6 @@
+publish:
+  entrypoint: hello
+
 agents:
   hello:
     model: gpt-4o-mini

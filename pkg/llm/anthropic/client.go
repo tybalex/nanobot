@@ -49,19 +49,6 @@ func NewClient(cfg Config, config types.Config) *Client {
 	}
 }
 
-func CompleteCompletionOptions(opts ...types.CompletionOptions) types.CompletionOptions {
-	var all types.CompletionOptions
-	for _, opt := range opts {
-		if opt.Progress != nil {
-			if all.Progress != nil {
-				panic("multiple progress handlers provided")
-			}
-			all.Progress = opt.Progress
-		}
-	}
-	return all
-}
-
 func (c *Client) Complete(ctx context.Context, completionRequest types.CompletionRequest, opts ...types.CompletionOptions) (*types.CompletionResponse, error) {
 	req, err := toRequest(&completionRequest)
 	if err != nil {
@@ -79,7 +66,7 @@ func (c *Client) Complete(ctx context.Context, completionRequest types.Completio
 
 func (c *Client) complete(ctx context.Context, req Request, opts ...types.CompletionOptions) (*Response, error) {
 	var (
-		opt = CompleteCompletionOptions(opts...)
+		opt = types.CompleteCompletionOptions(opts...)
 	)
 
 	req.Stream = true

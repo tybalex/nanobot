@@ -143,6 +143,7 @@ func (s *Sampler) Sample(ctx context.Context, req mcp.CreateMessageRequest, opts
 	if opt.ProgressToken != nil {
 		var cancel func()
 		completeOptions.Progress, cancel = setupProgress(ctx, opt.ProgressToken)
+		completeOptions.ProgressToken = opt.ProgressToken
 		defer cancel()
 	}
 

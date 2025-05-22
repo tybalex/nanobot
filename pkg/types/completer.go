@@ -12,7 +12,24 @@ type Completer interface {
 }
 
 type CompletionOptions struct {
-	Progress chan<- json.RawMessage
+	ProgressToken any
+	Progress      chan<- json.RawMessage
+}
+
+func CompleteCompletionOptions(opts ...CompletionOptions) CompletionOptions {
+	var all CompletionOptions
+	for _, opt := range opts {
+		if opt.Progress != nil {
+			if all.Progress != nil {
+				panic("multiple progress handlers provided")
+			}
+			all.Progress = opt.Progress
+		}
+		if opt.ProgressToken != "" {
+			all.ProgressToken = opt.ProgressToken
+		}
+	}
+	return all
 }
 
 type CompletionRequest struct {

@@ -102,7 +102,7 @@ type Agent struct {
 	Instructions   DynamicInstructions       `json:"instructions,omitempty"`
 	Model          string                    `json:"model,omitempty"`
 	Tools          []string                  `json:"tools,omitempty"`
-	History        *bool                     `json:"history,omitempty"`
+	ChatHistory    *bool                     `json:"chatHistory,omitempty"`
 	ToolExtensions map[string]map[string]any `json:"toolExtensions,omitempty"`
 	ToolChoice     string                    `json:"toolChoice,omitempty"`
 	Temperature    *json.Number              `json:"temperature,omitempty"`

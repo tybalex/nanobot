@@ -309,9 +309,11 @@ func (s *Server) handleInitialize(ctx context.Context, msg mcp.Message, payload 
 	if err != nil {
 		return err
 	}
-	toolMappings[types.AgentTool], err = s.runtime.GetEntryPoint(ctx, toolMappings)
-	if err != nil {
-		return err
+	if s.runtime.GetConfig().Publish.Entrypoint != "" {
+		toolMappings[types.AgentTool], err = s.runtime.GetEntryPoint(ctx, toolMappings)
+		if err != nil {
+			return err
+		}
 	}
 	msg.Session.Set(toolMappingKey, toolMappings)
 

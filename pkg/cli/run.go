@@ -122,6 +122,21 @@ func (r *Run) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if c := runtime.GetConfig(); c.Publish.Entrypoint == "" {
+		var (
+			agentName string
+			example   string
+		)
+		for name := range c.Agents {
+			agentName = name
+			break
+		}
+		if agentName != "" {
+			example = ", for example:\n\npublish:\n  entrypoint: " + agentName + "\nagents:\n  " + agentName + ": ...\n"
+		}
+		return fmt.Errorf("there are no entrypoints defined in the config file, please add one to the publish section%s", example)
+	}
+
 	l, err := net.Listen("tcp", "localhost:0")
 	if err != nil {
 		return fmt.Errorf("failed to pick a local port: %w", err)

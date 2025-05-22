@@ -7,9 +7,9 @@ import (
 	"github.com/obot-platform/nanobot/pkg/llm/responses"
 )
 
-func PrintProgress(msg json.RawMessage) {
+func PrintProgress(msg json.RawMessage) bool {
 	if anthropic.PrintProgress(msg) {
-		return
+		return true
 	}
-	responses.PrintProgress(msg)
+	return responses.PrintProgress(msg)
 }
