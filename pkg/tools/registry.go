@@ -348,6 +348,9 @@ func (r *Registry) GetEntryPoint(ctx context.Context, existingTools types.ToolMa
 		return types.TargetMapping{}, fmt.Errorf("expected one agent for entrypoint %s, got %d", entrypoint, len(agents))
 	}
 	for _, v := range agents {
+		target := v.Target.(mcp.Tool)
+		target.Name = types.AgentTool
+		v.Target = target
 		return v, nil
 	}
 	panic("unreachable")
