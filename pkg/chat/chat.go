@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/obot-platform/nanobot/pkg/confirm"
 	"github.com/obot-platform/nanobot/pkg/llm"
@@ -64,6 +65,7 @@ func Chat(ctx context.Context, listenAddress string, confirmations *confirm.Serv
 		return nil
 	}
 
+	_, _ = fmt.Fprintln(os.Stderr)
 	intro, _ := c.Session.ServerCapabilities.Experimental["nanobot/intro"].(string)
 	if intro != "" {
 		_, _ = fmt.Fprintf(os.Stderr, "%s\n", intro)
@@ -71,7 +73,17 @@ func Chat(ctx context.Context, listenAddress string, confirmations *confirm.Serv
 
 	scanner := bufio.NewScanner(os.Stdin)
 
+	first := true
 	next := func() bool {
+		if !first {
+			// Arbitrary delay to prevent the progress from override the prompt.
+			// This is because the progress comes through the SSE channel where as the chat response
+			// comes from the POST response. So it's possible to get the POST response before the SSE
+			// responses are all done. (Yeah, annoying, I know. But switching to SSE and not HTTP streaming
+			// will fix this once I have SSE working.)
+			time.Sleep(300 * time.Millisecond)
+		}
+		first = false
 		fmt.Println()
 		fmt.Print("> ")
 		return scanner.Scan()

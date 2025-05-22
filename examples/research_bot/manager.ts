@@ -16,17 +16,20 @@ type Queries = {
     }[];
 }
 
-server.tool("research", {query: z.string()}, async ({query}, ctx) => {
-    const queries = await sampleText(ctx, "planner", `Query: ${query}`);
+server.tool("research", {prompt: z.string()}, async ({prompt}, ctx) => {
+    const queries = await sampleText(ctx, "planner", `Query: ${prompt}`);
 
     const parsedQueries = JSON.parse(queries) as Queries;
 
-    const searches = await Promise.all(parsedQueries.searches.map(async search => {
-        return sampleText(ctx, "searchAgent", `Search term: ${search.query}\nReason for searching: ${search.reason}`)
-    }))
+    const searches = [] as string[];
+
+    for (const search of parsedQueries.searches) {
+        const searchResult = await sampleText(ctx, "searchAgent", `Search term: ${search.query}\nReason for searching: ${search.reason}`);
+        searches.push(searchResult);
+    }
 
     const paper = await sampleText(ctx, "writer",
-        `Original query: ${query}\nSummarized search results: ${JSON.stringify(searches)}\n\n`)
+        `Original query: ${prompt}\nSummarized search results: ${JSON.stringify(searches)}\n\n`)
 
     return text(paper);
 })

@@ -98,6 +98,7 @@ type Session struct {
 	ServerCapabilities *ServerCapabilities
 	recorder           *recorder
 	sessionID          string
+	Parent             *Session
 	attributes         map[string]any
 }
 

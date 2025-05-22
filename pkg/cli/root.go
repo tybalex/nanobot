@@ -122,7 +122,7 @@ func (n *Nanobot) loadEnv() (map[string]string, error) {
 }
 
 func (n *Nanobot) GetRuntime(cfgPath string, opts ...runtime.Options) (*runtime.Runtime, error) {
-	cfg, dir, err := config.Load(cfgPath)
+	cfg, dir, err := config.Load(cfgPath, runtime.CompleteOptions(opts...).Profiles...)
 	if err != nil {
 		return nil, err
 	}

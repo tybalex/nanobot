@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"maps"
@@ -14,7 +15,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func Load(path string) (*types.Config, string, error) {
+func Load(path string, profiles ...string) (*types.Config, string, error) {
 	var (
 		last types.Config
 		data []byte
@@ -53,6 +54,32 @@ func Load(path string) (*types.Config, string, error) {
 		return nil, "", err
 	}
 
+	if last.Extends != "" {
+		parent, _, err := Load(filepath.Join(dir, last.Extends), profiles...)
+		if err != nil {
+			return nil, "", fmt.Errorf("error reading %s: %w", last.Extends, err)
+		}
+		last, err = merge(*parent, last)
+		if err != nil {
+			return nil, "", fmt.Errorf("error merging %s: %w", last.Extends, err)
+		}
+	}
+
+	for _, profile := range profiles {
+		profile, _, optional := strings.Cut(profile, "?")
+		profileConfig, found := last.Profiles[profile]
+		if !found && !optional {
+			return nil, "", fmt.Errorf("profile %s not found", profile)
+		} else if !found {
+			continue
+		}
+		var err error
+		last, err = merge(last, profileConfig)
+		if err != nil {
+			return nil, "", fmt.Errorf("error merging profile %s: %w", profile, err)
+		}
+	}
+
 	seen := map[string]string{}
 	if err := checkDup(seen, "mcpServer", slices.Collect(maps.Keys(last.MCPServers))); err != nil {
 		return nil, "", err
@@ -74,6 +101,48 @@ func Load(path string) (*types.Config, string, error) {
 	}
 
 	return &last, dir, nil
+}
+
+func toMap(cfg types.Config) (map[string]any, error) {
+	result := map[string]any{}
+	data, err := json.Marshal(cfg)
+	if err != nil {
+		return nil, err
+	}
+	return result, json.Unmarshal(data, &result)
+}
+
+func mergeObject(base, overlay any) any {
+	if baseMap, ok := base.(map[string]any); ok {
+		if overlayMap, ok := overlay.(map[string]any); ok {
+			newMap := maps.Clone(baseMap)
+			for k, v := range overlayMap {
+				newMap[k] = mergeObject(baseMap[k], v)
+			}
+			return newMap
+		}
+	}
+	return overlay
+}
+
+func merge(base, overlay types.Config) (types.Config, error) {
+	baseMap, err := toMap(base)
+	if err != nil {
+		return types.Config{}, err
+	}
+	overlayMap, err := toMap(overlay)
+	if err != nil {
+		return types.Config{}, err
+	}
+
+	merged := mergeObject(baseMap, overlayMap)
+	mergedData, err := json.Marshal(merged)
+	if err != nil {
+		return types.Config{}, err
+	}
+
+	var result types.Config
+	return result, json.Unmarshal(mergedData, &result)
 }
 
 func checkDup(seen map[string]string, category string, keys []string) error {

@@ -250,6 +250,7 @@ func (s *HTTPClient) Send(ctx context.Context, msg Message) error {
 			return fmt.Errorf("failed to unmarshal mcp send message response: %w", err)
 
 		}
+		log.Messages(ctx, s.serverName, false, data)
 		go s.handler(result)
 	}
 	return nil

@@ -8,10 +8,13 @@ import (
 )
 
 type Config struct {
+	Extends    string                   `json:"extends,omitempty"`
+	Env        map[string]string        `json:"env,omitempty"`
 	Publish    Publish                  `json:"publish,omitempty"`
 	Runtime    Runtime                  `json:"runtime,omitempty"`
 	Agents     map[string]Agent         `json:"agents,omitempty"`
 	MCPServers map[string]mcp.MCPServer `json:"mcpServers,omitempty"`
+	Profiles   map[string]Config        `json:"profiles,omitempty"`
 }
 
 type Runtime struct {

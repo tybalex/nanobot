@@ -1,5 +1,13 @@
 publish:
-  tools: [manager]
+  introduction: |-
+    This is a research bot that can help you with research queries. It will first come up with
+    a set of web searches to perform, then it will perform those searches and summarize the
+    results. Finally, it will write a detailed report based on the findings.
+    
+    Each prompt will be a new report. This agent does not chat.
+    
+    Entry a topic or query to research.
+  entrypoint: manager/research
 
 agents:
   planner:
@@ -12,14 +20,14 @@ agents:
       schema:
         type: object
         additionalProperties: false
-        required: [searches]
+        required: [ searches ]
         properties:
           searches:
             type: array
             description: A list of web searches to perform to best answer the query.
             items:
               type: object
-              required: [reason, query]
+              required: [ reason, query ]
               additionalProperties: false
               properties:
                 reason:
@@ -40,7 +48,7 @@ agents:
       itself.
     toolChoice: required
     tools:
-    - search
+      - search
 
   writer:
     model: o3-mini
@@ -56,7 +64,7 @@ agents:
       for 5-10 pages of content, at least 1000 words.
     output:
       type: object
-      required: [short_summary, markdown_report, follow_up_questions]
+      required: [ short_summary, markdown_report, follow_up_questions ]
       properties:
         short_summary:
           type: string
@@ -74,9 +82,9 @@ agents:
 mcpServers:
   search:
     command: npx
-    args: ["-y", "@modelcontextprotocol/server-brave-search" ]
+    args: [ "-y", "@modelcontextprotocol/server-brave-search" ]
     env:
       BRAVE_API_KEY: ${BRAVE_API_KEY}
   manager:
     command: npx
-    args: ["tsx", "manager.ts" ]
+    args: [ "tsx", "manager.ts" ]

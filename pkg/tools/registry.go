@@ -45,6 +45,12 @@ func completeOptions(opts ...RegistryOptions) RegistryOptions {
 }
 
 func NewRegistry(env map[string]string, config types.Config, opts ...RegistryOptions) *Registry {
+	if env == nil {
+		env = make(map[string]string)
+	}
+	for k, v := range mcp.ReplaceMap(env, config.Env) {
+		env[k] = v
+	}
 	return &Registry{
 		servers: make(map[string]map[string]*mcp.Client),
 		env:     env,
@@ -111,8 +117,9 @@ func (r *Registry) GetClient(ctx context.Context, name string) (*mcp.Client, err
 	}
 
 	clientOpts := mcp.ClientOption{
-		Env:       r.env,
-		SessionID: session.ID() + "/" + uuid.String(),
+		Env:           r.env,
+		ParentSession: session,
+		SessionID:     session.ID() + "/" + uuid.String(),
 		OnRoots: func(ctx context.Context, msg mcp.Message) error {
 			return msg.Reply(ctx, mcp.ListRootsResult{
 				Roots: r.roots,
@@ -130,6 +137,9 @@ func (r *Registry) GetClient(ctx context.Context, name string) (*mcp.Client, err
 			if err != nil {
 				return fmt.Errorf("failed to marshal logging message: %w", err)
 			}
+			for session.Parent != nil {
+				session = session.Parent
+			}
 			return session.Send(ctx, mcp.Message{
 				Method: "notifications/message",
 				Params: data,
@@ -137,8 +147,10 @@ func (r *Registry) GetClient(ctx context.Context, name string) (*mcp.Client, err
 		},
 	}
 	if r.sampler != nil {
-		clientOpts.OnSampling = func(ctx context.Context, sampling mcp.CreateMessageRequest) (mcp.CreateMessageResult, error) {
-			return r.sampler.Sample(ctx, sampling)
+		clientOpts.OnSampling = func(ctx context.Context, samplingRequest mcp.CreateMessageRequest) (mcp.CreateMessageResult, error) {
+			return r.sampler.Sample(ctx, samplingRequest, sampling.SamplerOptions{
+				ProgressToken: uuid.String(),
+			})
 		}
 	}
 
@@ -159,15 +171,10 @@ func (r *Registry) SampleCall(ctx context.Context, agent string, args any, opts 
 	}
 
 	opt := completeSampleCallOptions(opts...)
-	sampleOpt := sampling.SamplerOptions{}
 
-	if opt.ProgressToken != nil {
-		var cancel func()
-		sampleOpt.Progress, cancel = setupProgress(ctx, opt.ProgressToken)
-		defer cancel()
-	}
-
-	result, err := r.sampler.Sample(ctx, *createMessageRequest, sampleOpt)
+	result, err := r.sampler.Sample(ctx, *createMessageRequest, sampling.SamplerOptions{
+		ProgressToken: opt.ProgressToken,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -456,6 +463,9 @@ func (r *Registry) convertToSampleRequest(agent string, args any) (*mcp.CreateMe
 
 func setupProgress(ctx context.Context, progressToken any) (chan json.RawMessage, func()) {
 	session := mcp.SessionFromContext(ctx)
+	for session.Parent != nil {
+		session = session.Parent
+	}
 	c := make(chan json.RawMessage, 1)
 	done := make(chan struct{})
 	go func() {

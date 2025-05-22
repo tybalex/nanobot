@@ -18,13 +18,14 @@ type Client struct {
 }
 
 type ClientOption struct {
-	OnSampling func(ctx context.Context, sampling CreateMessageRequest) (CreateMessageResult, error)
-	OnRoots    func(ctx context.Context, msg Message) error
-	OnLogging  func(ctx context.Context, logMsg LoggingMessage) error
-	OnMessage  func(ctx context.Context, msg Message) error
-	OnNotify   func(ctx context.Context, msg Message) error
-	Env        map[string]string
-	SessionID  string
+	OnSampling    func(ctx context.Context, sampling CreateMessageRequest) (CreateMessageResult, error)
+	OnRoots       func(ctx context.Context, msg Message) error
+	OnLogging     func(ctx context.Context, logMsg LoggingMessage) error
+	OnMessage     func(ctx context.Context, msg Message) error
+	OnNotify      func(ctx context.Context, msg Message) error
+	Env           map[string]string
+	ParentSession *Session
+	SessionID     string
 }
 
 type MCPServer struct {
@@ -130,6 +131,12 @@ func complete(opts ...ClientOption) ClientOption {
 			}
 			all.SessionID = opt.SessionID
 		}
+		if opt.ParentSession != nil {
+			if all.ParentSession != nil {
+				panic("multiple ParentSession provided")
+			}
+			all.ParentSession = opt.ParentSession
+		}
 	}
 	return all
 }
@@ -196,7 +203,12 @@ func NewSession(ctx context.Context, serverName string, config MCPServer, opts .
 		}
 	}
 
-	return newSession(ctx, wire, toHandler(opt), opt.SessionID, nil)
+	session, err := newSession(ctx, wire, toHandler(opt), opt.SessionID, nil)
+	if err != nil {
+		return nil, err
+	}
+	session.Parent = opt.ParentSession
+	return session, nil
 }
 
 func runCommand(ctx context.Context, cmd string, args []string, env []string) error {

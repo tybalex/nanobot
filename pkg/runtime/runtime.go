@@ -25,9 +25,10 @@ type Runtime struct {
 type Options struct {
 	Confirmations *confirm.Service
 	Roots         []mcp.Root
+	Profiles      []string
 }
 
-func completeOptions(opts ...Options) Options {
+func CompleteOptions(opts ...Options) Options {
 	var options Options
 	for _, opt := range opts {
 		if opt.Confirmations != nil {
@@ -36,13 +37,14 @@ func completeOptions(opts ...Options) Options {
 			}
 			options.Confirmations = opt.Confirmations
 		}
+		options.Profiles = append(options.Profiles, opt.Profiles...)
 		options.Roots = append(options.Roots, opt.Roots...)
 	}
 	return options
 }
 
 func NewRuntime(env map[string]string, cfg llm.Config, config types.Config, opts ...Options) *Runtime {
-	opt := completeOptions(opts...)
+	opt := CompleteOptions(opts...)
 	completer := llm.NewClient(cfg, config)
 	registry := tools.NewRegistry(env, config, tools.RegistryOptions{
 		Roots: opt.Roots,

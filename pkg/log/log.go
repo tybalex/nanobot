@@ -26,10 +26,6 @@ func Messages(_ context.Context, server string, out bool, data []byte) {
 		return
 	}
 
-	if !EnableProgress && bytes.Contains(data, []byte(`"notifications/progress"`)) {
-		return
-	}
-
 	fmtStr := "->(%s) %s\n"
 	if !out {
 		fmtStr = "<-(%s) %s\n"

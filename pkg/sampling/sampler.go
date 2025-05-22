@@ -8,6 +8,7 @@ import (
 	"slices"
 	"sort"
 
+	"github.com/obot-platform/nanobot/pkg/log"
 	"github.com/obot-platform/nanobot/pkg/mcp"
 	"github.com/obot-platform/nanobot/pkg/types"
 )
@@ -89,18 +90,18 @@ func (s *Sampler) getMatchingModel(req *mcp.CreateMessageRequest) (string, bool)
 }
 
 type SamplerOptions struct {
-	Progress chan<- json.RawMessage
-	Continue bool
+	ProgressToken any
+	Continue      bool
 }
 
 func completeSamplerOptions(opts ...SamplerOptions) SamplerOptions {
 	var all SamplerOptions
 	for _, opt := range opts {
-		if opt.Progress != nil {
-			if all.Progress != nil {
-				panic("multiple progress handlers provided")
+		if opt.ProgressToken != nil {
+			if all.ProgressToken != nil {
+				panic("multiple progress tokens provided")
 			}
-			all.Progress = opt.Progress
+			all.ProgressToken = opt.ProgressToken
 		}
 		if opt.Continue {
 			all.Continue = true
@@ -137,9 +138,15 @@ func (s *Sampler) Sample(ctx context.Context, req mcp.CreateMessageRequest, opts
 		})
 	}
 
-	resp, err := s.completer.Complete(ctx, request, types.CompletionOptions{
-		Progress: opt.Progress,
-	})
+	var completeOptions types.CompletionOptions
+
+	if opt.ProgressToken != nil {
+		var cancel func()
+		completeOptions.Progress, cancel = setupProgress(ctx, opt.ProgressToken)
+		defer cancel()
+	}
+
+	resp, err := s.completer.Complete(ctx, request, completeOptions)
 	if err != nil {
 		return result, err
 	}
@@ -164,4 +171,39 @@ func (s *Sampler) Sample(ctx context.Context, req mcp.CreateMessageRequest, opts
 	}
 
 	return result, nil
+}
+
+func setupProgress(ctx context.Context, progressToken any) (chan json.RawMessage, func()) {
+	session := mcp.SessionFromContext(ctx)
+	for session.Parent != nil {
+		session = session.Parent
+	}
+	c := make(chan json.RawMessage, 1)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		var counter int
+		for payload := range c {
+			counter++
+			data, err := json.Marshal(mcp.NotificationProgressRequest{
+				ProgressToken: progressToken,
+				Progress:      json.Number(fmt.Sprint(counter)),
+				Data:          payload,
+			})
+			if err != nil {
+				continue
+			}
+			err = session.Send(ctx, mcp.Message{
+				Method: "notifications/progress",
+				Params: data,
+			})
+			if err != nil {
+				log.Errorf(ctx, "failed to send progress notification: %v", err)
+			}
+		}
+	}()
+	return c, func() {
+		close(c)
+		<-done
+	}
 }

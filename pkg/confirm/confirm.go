@@ -90,6 +90,10 @@ func (s *Service) Confirm(ctx context.Context, session *mcp.Session, target type
 	s.requests[uid] = req
 	s.cond.L.Unlock()
 
+	for session.Parent != nil {
+		session = session.Parent
+	}
+
 	err := session.SendPayload(ctx, "notifications/message", mcp.LoggingMessage{
 		Level: "info",
 		Data: map[string]any{
