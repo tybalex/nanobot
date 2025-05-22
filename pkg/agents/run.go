@@ -92,19 +92,10 @@ func (a *Agents) populateRequest(ctx context.Context, run *run, previousRun *run
 	}
 
 	if req.SystemPrompt == "" && agent.Instructions.IsSet() {
-		if agent.Instructions.IsPrompt() {
-			prompt, err := a.registry.GetPrompt(ctx, agent.Instructions.MCPServer,
-				agent.Instructions.Prompt, agent.Instructions.Args)
-			if err != nil {
-				return req, nil, fmt.Errorf("failed to get prompt: %w", err)
-			}
-			if len(prompt.Messages) != 1 {
-				return req, nil, fmt.Errorf("prompt %s/%s returned %d messages, expected 1",
-					agent.Instructions.MCPServer, agent.Instructions.Prompt, len(prompt.Messages))
-			}
-			req.SystemPrompt = prompt.Messages[0].Content.Text
-		} else {
-			req.SystemPrompt = agent.Instructions.Instructions
+		var err error
+		req.SystemPrompt, err = a.registry.GetDynamicInstruction(ctx, agent.Instructions)
+		if err != nil {
+			return req, nil, err
 		}
 	}
 

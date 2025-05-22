@@ -64,6 +64,11 @@ func Chat(ctx context.Context, listenAddress string, confirmations *confirm.Serv
 		return nil
 	}
 
+	intro, _ := c.Session.ServerCapabilities.Experimental["nanobot/intro"].(string)
+	if intro != "" {
+		_, _ = fmt.Fprintf(os.Stderr, "%s\n", intro)
+	}
+
 	scanner := bufio.NewScanner(os.Stdin)
 
 	next := func() bool {
@@ -71,6 +76,10 @@ func Chat(ctx context.Context, listenAddress string, confirmations *confirm.Serv
 		fmt.Print("> ")
 		return scanner.Scan()
 	}
+
+	context.AfterFunc(ctx, func() {
+		os.Exit(0)
+	})
 
 	for next() {
 		line := scanner.Text()

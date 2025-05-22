@@ -207,7 +207,7 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 
 type FunctionCallOutput struct {
 	CallID string  `json:"call_id,omitempty"`
-	Output string  `json:"output,omitempty"`
+	Output string  `json:"output"`
 	Type   string  `json:"type,omitempty"`
 	ID     *string `json:"id,omitempty"`
 	Status *Status `json:"status,omitempty"`

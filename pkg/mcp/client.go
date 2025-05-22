@@ -19,6 +19,7 @@ type Client struct {
 
 type ClientOption struct {
 	OnSampling func(ctx context.Context, sampling CreateMessageRequest) (CreateMessageResult, error)
+	OnRoots    func(ctx context.Context, msg Message) error
 	OnLogging  func(ctx context.Context, logMsg LoggingMessage) error
 	OnMessage  func(ctx context.Context, msg Message) error
 	OnNotify   func(ctx context.Context, msg Message) error
@@ -53,6 +54,13 @@ func toHandler(opts ClientOption) MessageHandler {
 					log.Errorf(ctx, "failed to reply to sampling/createMessage: %v", err)
 				}
 			}()
+		} else if msg.Method == "roots/list" && opts.OnRoots != nil {
+			go func() {
+				if err := opts.OnRoots(ctx, msg); err != nil {
+					msg.SendUnknownError(ctx, fmt.Errorf("failed to handle roots/list: %w", err))
+					return
+				}
+			}()
 		} else if msg.Method == "notifications/message" && opts.OnLogging != nil {
 			var param LoggingMessage
 			if err := json.Unmarshal(msg.Params, &param); err != nil {
@@ -78,6 +86,12 @@ func toHandler(opts ClientOption) MessageHandler {
 func complete(opts ...ClientOption) ClientOption {
 	var all ClientOption
 	for _, opt := range opts {
+		if opt.OnRoots != nil {
+			if all.OnRoots != nil {
+				panic("multiple OnRoots handlers provided")
+			}
+			all.OnRoots = opt.OnRoots
+		}
 		if opt.OnSampling != nil {
 			if all.OnSampling != nil {
 				panic("multiple OnSampling handlers provided")
@@ -120,7 +134,7 @@ func complete(opts ...ClientOption) ClientOption {
 	return all
 }
 
-func replaceString(envs map[string]string, str string) string {
+func ReplaceString(envs map[string]string, str string) string {
 	return os.Expand(str, func(key string) string {
 		if val, ok := envs[key]; ok {
 			return val
@@ -129,10 +143,10 @@ func replaceString(envs map[string]string, str string) string {
 	})
 }
 
-func replaceMap(envs map[string]string, m map[string]string) map[string]string {
+func ReplaceMap(envs map[string]string, m map[string]string) map[string]string {
 	newMap := make(map[string]string, len(m))
 	for k, v := range m {
-		newMap[replaceString(envs, k)] = replaceString(envs, v)
+		newMap[ReplaceString(envs, k)] = ReplaceString(envs, v)
 	}
 	return newMap
 }
@@ -142,7 +156,7 @@ func replaceEnv(envs map[string]string, command string, args []string, env map[s
 	if newEnvMap == nil {
 		newEnvMap = make(map[string]string, len(env))
 	}
-	maps.Copy(newEnvMap, replaceMap(envs, env))
+	maps.Copy(newEnvMap, ReplaceMap(envs, env))
 
 	newEnv := make([]string, 0, len(env))
 	for _, k := range slices.Sorted(maps.Keys(newEnvMap)) {
@@ -151,9 +165,9 @@ func replaceEnv(envs map[string]string, command string, args []string, env map[s
 
 	newArgs := make([]string, len(args))
 	for i, arg := range args {
-		newArgs[i] = replaceString(envs, arg)
+		newArgs[i] = ReplaceString(envs, arg)
 	}
-	return replaceString(envs, command), newArgs, newEnv
+	return ReplaceString(envs, command), newArgs, newEnv
 }
 
 func NewSession(ctx context.Context, serverName string, config MCPServer, opts ...ClientOption) (*Session, error) {
@@ -164,7 +178,7 @@ func NewSession(ctx context.Context, serverName string, config MCPServer, opts .
 	)
 
 	cmd, args, env := replaceEnv(opt.Env, config.Command, config.Args, config.Env)
-	headers := replaceMap(opt.Env, config.Headers)
+	headers := ReplaceMap(opt.Env, config.Headers)
 
 	if config.Command == "" && config.BaseURL == "" {
 		return nil, fmt.Errorf("no command or base URL provided")
@@ -210,14 +224,21 @@ func NewClient(ctx context.Context, serverName string, config MCPServer, opts ..
 		Session: session,
 	}
 
-	var sampling *struct{}
+	var (
+		sampling *struct{}
+		roots    *RootsCapability
+	)
 	if opt.OnSampling != nil {
 		sampling = &struct{}{}
+	}
+	if opt.OnRoots != nil {
+		roots = &RootsCapability{}
 	}
 	_, err = c.Initialize(ctx, InitializeRequest{
 		ProtocolVersion: "2025-03-26",
 		Capabilities: ClientCapabilities{
 			Sampling: sampling,
+			Roots:    roots,
 		},
 		ClientInfo: ClientInfo{},
 	})

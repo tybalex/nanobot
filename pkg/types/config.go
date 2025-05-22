@@ -23,15 +23,16 @@ type Runtime struct {
 }
 
 type Publish struct {
-	Name              string     `json:"name,omitempty"`
-	Description       string     `json:"description,omitempty"`
-	Version           string     `json:"version,omitempty"`
-	Instructions      string     `json:"instructions,omitempty"`
-	Tools             StringList `json:"tools,omitzero"`
-	Prompts           StringList `json:"prompts,omitzero"`
-	Resources         StringList `json:"resources,omitzero"`
-	ResourceTemplates StringList `json:"resourceTemplates,omitzero"`
-	Entrypoint        string     `json:"entrypoint,omitempty"`
+	Name              string              `json:"name,omitempty"`
+	Description       string              `json:"description,omitempty"`
+	Introduction      DynamicInstructions `json:"introduction,omitempty"`
+	Version           string              `json:"version,omitempty"`
+	Instructions      string              `json:"instructions,omitempty"`
+	Tools             StringList          `json:"tools,omitzero"`
+	Prompts           StringList          `json:"prompts,omitzero"`
+	Resources         StringList          `json:"resources,omitzero"`
+	ResourceTemplates StringList          `json:"resourceTemplates,omitzero"`
+	Entrypoint        string              `json:"entrypoint,omitempty"`
 }
 
 type ToolRef struct {

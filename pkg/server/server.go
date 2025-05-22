@@ -333,13 +333,25 @@ func (s *Server) handleInitialize(ctx context.Context, msg mcp.Message, payload 
 	}
 	msg.Session.Set(resourceTemplateMappingKey, resourceTemplateMappings)
 
+	var experimental map[string]any
+	if c.Publish.Introduction.IsSet() {
+		intro, err := s.runtime.GetDynamicInstruction(ctx, c.Publish.Introduction)
+		if err != nil {
+			return fmt.Errorf("failed to get introduction: %w", err)
+		}
+		experimental = map[string]any{
+			"nanobot/intro": intro,
+		}
+	}
+
 	return msg.Reply(ctx, mcp.InitializeResult{
 		ProtocolVersion: payload.ProtocolVersion,
 		Capabilities: mcp.ServerCapabilities{
-			Logging:   &struct{}{},
-			Prompts:   &mcp.PromptsServerCapability{},
-			Resources: &mcp.ResourcesServerCapability{},
-			Tools:     &mcp.ToolsServerCapability{},
+			Experimental: experimental,
+			Logging:      &struct{}{},
+			Prompts:      &mcp.PromptsServerCapability{},
+			Resources:    &mcp.ResourcesServerCapability{},
+			Tools:        &mcp.ToolsServerCapability{},
 		},
 		ServerInfo: mcp.ServerInfo{
 			Name:    c.Publish.Name,

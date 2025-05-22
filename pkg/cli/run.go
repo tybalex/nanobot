@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -20,10 +21,11 @@ import (
 )
 
 type Run struct {
-	MCP           bool   `usage:"Run the nanobot as an MCP server" default:"false" short:"m" env:"NANOBOT_MCP"`
-	AutoConfirm   bool   `usage:"Automatically confirm all tool calls" default:"false" short:"y"`
-	Output        string `usage:"Output file for the result. Use - for stdout" default:"" short:"o"`
-	ListenAddress string `usage:"Address to listen on (ex: localhost:8099)" default:"stdio" short:"a"`
+	MCP           bool     `usage:"Run the nanobot as an MCP server" default:"false" short:"m" env:"NANOBOT_MCP"`
+	AutoConfirm   bool     `usage:"Automatically confirm all tool calls" default:"false" short:"y"`
+	Output        string   `usage:"Output file for the result. Use - for stdout" default:"" short:"o"`
+	ListenAddress string   `usage:"Address to listen on (ex: localhost:8099)" default:"stdio" short:"a"`
+	Roots         []string `usage:"Roots to expose the MCP server in the form of name:directory" short:"r"`
 	n             *Nanobot
 }
 
@@ -55,9 +57,56 @@ func (r *Run) Customize(cmd *cobra.Command) {
 	cmd.Args = cobra.MinimumNArgs(1)
 }
 
+func (r *Run) getRoots() ([]mcp.Root, error) {
+	var (
+		rootDefs = r.Roots
+		roots    []mcp.Root
+	)
+
+	if len(rootDefs) == 0 {
+		rootDefs = []string{"Current Directory:."}
+	}
+
+	for _, root := range rootDefs {
+		name, directory, ok := strings.Cut(root, ":")
+		if !ok {
+			name = filepath.Base(root)
+			directory = root
+		}
+		if !filepath.IsAbs(directory) {
+			wd, err := os.Getwd()
+			if err != nil {
+				return nil, fmt.Errorf("failed to get current working directory: %w", err)
+			}
+			directory = filepath.Join(wd, directory)
+		}
+		if _, err := os.Stat(directory); err != nil {
+			return nil, fmt.Errorf("failed to stat directory root (%s): %w", name, err)
+		}
+
+		roots = append(roots, mcp.Root{
+			Name: name,
+			URI:  "file://" + directory,
+		})
+	}
+
+	return roots, nil
+}
+
 func (r *Run) Run(cmd *cobra.Command, args []string) error {
+	var (
+		runtimeOpt runtime.Options
+	)
+
+	roots, err := r.getRoots()
+	if err != nil {
+		return err
+	}
+
+	runtimeOpt.Roots = roots
+
 	if r.MCP {
-		runtime, err := r.n.GetRuntime(args[0])
+		runtime, err := r.n.GetRuntime(args[0], runtimeOpt)
 		if err != nil {
 			return err
 		}
@@ -65,12 +114,7 @@ func (r *Run) Run(cmd *cobra.Command, args []string) error {
 		return r.runMCP(cmd.Context(), runtime, nil)
 	}
 
-	var (
-		runtimeOpt = runtime.Options{
-			Confirmations: confirm.NewService(),
-		}
-	)
-
+	runtimeOpt.Confirmations = confirm.NewService()
 	runtimeOpt.Confirmations.Start(context.Background())
 
 	runtime, err := r.n.GetRuntime(args[0], runtimeOpt)
@@ -126,7 +170,6 @@ func (r *Run) runMCP(ctx context.Context, runtime *runtime.Runtime, l net.Listen
 		Handler: &httpServer,
 	}
 
-	_, _ = fmt.Fprintf(os.Stderr, "Starting server on %s\n", address)
 	context.AfterFunc(ctx, func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
@@ -135,6 +178,7 @@ func (r *Run) runMCP(ctx context.Context, runtime *runtime.Runtime, l net.Listen
 
 	var err error
 	if l == nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Starting server on %s\n", address)
 		err = s.ListenAndServe()
 	} else {
 		err = s.Serve(l)

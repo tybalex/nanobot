@@ -24,6 +24,7 @@ type Runtime struct {
 
 type Options struct {
 	Confirmations *confirm.Service
+	Roots         []mcp.Root
 }
 
 func completeOptions(opts ...Options) Options {
@@ -35,6 +36,7 @@ func completeOptions(opts ...Options) Options {
 			}
 			options.Confirmations = opt.Confirmations
 		}
+		options.Roots = append(options.Roots, opt.Roots...)
 	}
 	return options
 }
@@ -42,7 +44,9 @@ func completeOptions(opts ...Options) Options {
 func NewRuntime(env map[string]string, cfg llm.Config, config types.Config, opts ...Options) *Runtime {
 	opt := completeOptions(opts...)
 	completer := llm.NewClient(cfg, config)
-	registry := tools.NewRegistry(env, config)
+	registry := tools.NewRegistry(env, config, tools.RegistryOptions{
+		Roots: opt.Roots,
+	})
 	agents := agents.New(completer, registry, opt.Confirmations, config)
 	sampler := sampling.NewSampler(config, agents)
 

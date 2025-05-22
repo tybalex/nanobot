@@ -5,8 +5,8 @@ import (
 )
 
 type ClientCapabilities struct {
-	Roots    RootsCapability `json:"roots,omitzero"`
-	Sampling *struct{}       `json:"sampling,omitzero"`
+	Roots    *RootsCapability `json:"roots,omitempty"`
+	Sampling *struct{}        `json:"sampling,omitzero"`
 }
 
 type RootsCapability struct {
@@ -19,10 +19,11 @@ type ClientInfo struct {
 }
 
 type ServerCapabilities struct {
-	Logging   *struct{}                  `json:"logging,omitempty"`
-	Prompts   *PromptsServerCapability   `json:"prompts,omitempty"`
-	Resources *ResourcesServerCapability `json:"resources,omitempty"`
-	Tools     *ToolsServerCapability     `json:"tools,omitempty"`
+	Experimental map[string]any             `json:"experimental,omitempty"`
+	Logging      *struct{}                  `json:"logging,omitempty"`
+	Prompts      *PromptsServerCapability   `json:"prompts,omitempty"`
+	Resources    *ResourcesServerCapability `json:"resources,omitempty"`
+	Tools        *ToolsServerCapability     `json:"tools,omitempty"`
 }
 
 type ToolsServerCapability struct {
@@ -81,6 +82,18 @@ type CreateMessageRequest struct {
 	Temperature      *json.Number      `json:"temperature,omitempty"`
 	StopSequences    []string          `json:"stopSequences,omitzero"`
 	Metadata         map[string]any    `json:"metadata,omitempty"`
+}
+
+type ListRootsRequest struct {
+}
+
+type ListRootsResult struct {
+	Roots []Root `json:"roots"`
+}
+
+type Root struct {
+	URI  string `json:"uri"`
+	Name string `json:"name,omitempty"`
 }
 
 type LoggingMessage struct {

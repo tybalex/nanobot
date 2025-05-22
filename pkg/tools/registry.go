@@ -19,6 +19,7 @@ import (
 type Registry struct {
 	env        map[string]string
 	servers    map[string]map[string]*mcp.Client
+	roots      []mcp.Root
 	config     types.Config
 	serverLock sync.Mutex
 	sampler    Sampler
@@ -28,16 +29,51 @@ type Sampler interface {
 	Sample(ctx context.Context, sampling mcp.CreateMessageRequest, opts ...sampling.SamplerOptions) (mcp.CreateMessageResult, error)
 }
 
-func NewRegistry(env map[string]string, config types.Config) *Registry {
+type RegistryOptions struct {
+	Roots []mcp.Root
+}
+
+func completeOptions(opts ...RegistryOptions) RegistryOptions {
+	var options RegistryOptions
+	for _, opt := range opts {
+		options.Roots = append(options.Roots, opt.Roots...)
+	}
+	if options.Roots == nil {
+		options.Roots = []mcp.Root{}
+	}
+	return options
+}
+
+func NewRegistry(env map[string]string, config types.Config, opts ...RegistryOptions) *Registry {
 	return &Registry{
 		servers: make(map[string]map[string]*mcp.Client),
 		env:     env,
 		config:  config,
+		roots:   completeOptions(opts...).Roots,
 	}
 }
 
 func (r *Registry) SetSampler(sampler Sampler) {
 	r.sampler = sampler
+}
+
+func (r *Registry) GetDynamicInstruction(ctx context.Context, instruction types.DynamicInstructions) (string, error) {
+	if !instruction.IsSet() {
+		return "", nil
+	}
+	if !instruction.IsPrompt() {
+		return instruction.Instructions, nil
+	}
+
+	prompt, err := r.GetPrompt(ctx, instruction.MCPServer, instruction.Prompt, mcp.ReplaceMap(r.env, instruction.Args))
+	if err != nil {
+		return "", fmt.Errorf("failed to get prompt: %w", err)
+	}
+	if len(prompt.Messages) != 1 {
+		return "", fmt.Errorf("prompt %s/%s returned %d messages, expected 1",
+			instruction.MCPServer, instruction.Prompt, len(prompt.Messages))
+	}
+	return prompt.Messages[0].Content.Text, nil
 }
 
 func (r *Registry) GetPrompt(ctx context.Context, target, prompt string, args map[string]string) (*mcp.GetPromptResult, error) {
@@ -77,6 +113,11 @@ func (r *Registry) GetClient(ctx context.Context, name string) (*mcp.Client, err
 	clientOpts := mcp.ClientOption{
 		Env:       r.env,
 		SessionID: session.ID() + "/" + uuid.String(),
+		OnRoots: func(ctx context.Context, msg mcp.Message) error {
+			return msg.Reply(ctx, mcp.ListRootsResult{
+				Roots: r.roots,
+			})
+		},
 		OnLogging: func(ctx context.Context, logMsg mcp.LoggingMessage) error {
 			data, err := json.Marshal(mcp.LoggingMessage{
 				Level:  logMsg.Level,
