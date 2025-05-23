@@ -1,7 +1,7 @@
 
 # Nanobot: Build Agents with MCP
 
-## Status: I just wrote this last week, might work, might not ¯\_(ツ)_/¯
+## Status: I just wrote this last week, might work, might not ¯\\_(ツ)_/¯
 
 Nanobot is a framework that combines MCP clients and servers to create full AI agents using
 only MCP. It is designed to be small, simple, non-intrusive, and leverage the pure awesomeness
