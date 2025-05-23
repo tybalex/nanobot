@@ -42,7 +42,7 @@ brew install nanobot-ai/tap/nanobot
 
 Install with curl (macOS/Linux):
 ```shell
-curl -sSfL https://get.nanobot.ai/install.sh | sh -
+curl -sSfL https://get.nanobot.ai | sh -
 ```
 
 For Windows there are binaries in the [releases](https://github.com/nanobot-ai/nanobot/releases) but they aren't really tested.
