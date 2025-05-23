@@ -1,3 +1,4 @@
+![Nanobot Logo](./docs/header.svg)
 
 # Nanobot: Build Agents with MCP
 
@@ -198,3 +199,7 @@ agents:
     # The intelligence of the agent used for the priority evaluation in the CreateMessage ModelPreferences.
     intelligence: 0.5
 ```
+
+# LICENSE
+
+Apache 2.0 License
