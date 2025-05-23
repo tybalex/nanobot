@@ -65,7 +65,7 @@ saved to a file using `-o [OUTPUT_FILE]`
 You agent can be ran as a MCP Server by using the `--mcp` flag. This will start a MCP server.
 ```shell
 # Start a HTTP Streaming server
-nanobot run nanobot.yaml --mcp --address localhost:8099
+nanobot run nanobot.yaml --mcp --listen-address localhost:8099
 ```
 
 ## Examples
