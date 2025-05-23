@@ -1,5 +1,5 @@
 {
-  "name": "example-nanobots",
+  "name": "research-bot",
   "type": "module",
   "peerDependencies": {
     "typescript": "^5"

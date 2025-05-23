@@ -26,6 +26,7 @@ type Run struct {
 	Output        string   `usage:"Output file for the result. Use - for stdout" default:"" short:"o"`
 	ListenAddress string   `usage:"Address to listen on (ex: localhost:8099)" default:"stdio" short:"a"`
 	Roots         []string `usage:"Roots to expose the MCP server in the form of name:directory" short:"r"`
+	Input         string   `usage:"Input file for the prompt" default:"" short:"f"`
 	n             *Nanobot
 }
 
@@ -143,6 +144,15 @@ func (r *Run) Run(cmd *cobra.Command, args []string) error {
 	}
 	r.ListenAddress = l.Addr().String()
 
+	prompt := strings.Join(args[1:], " ")
+	if r.Input != "" {
+		input, err := os.ReadFile(r.Input)
+		if err != nil {
+			return fmt.Errorf("failed to read input file: %w", err)
+		}
+		prompt = strings.TrimSpace(string(input))
+	}
+
 	eg, ctx := errgroup.WithContext(cmd.Context())
 	ctx, cancel := context.WithCancel(ctx)
 	eg.Go(func() error {
@@ -150,8 +160,7 @@ func (r *Run) Run(cmd *cobra.Command, args []string) error {
 	})
 	eg.Go(func() error {
 		defer cancel()
-		return chat.Chat(ctx, r.ListenAddress, runtimeOpt.Confirmations, r.AutoConfirm,
-			strings.Join(args[1:], " "), r.Output)
+		return chat.Chat(ctx, r.ListenAddress, runtimeOpt.Confirmations, r.AutoConfirm, prompt, r.Output)
 	})
 	return eg.Wait()
 }

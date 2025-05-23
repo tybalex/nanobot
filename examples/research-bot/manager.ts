@@ -1,6 +1,6 @@
 import {McpServer} from "@modelcontextprotocol/sdk/server/mcp.js";
 import {z} from "zod";
-import {sampleText, text} from "../utils";
+import {sampleText, text} from "./utils.ts";
 import {StdioServerTransport} from "@modelcontextprotocol/sdk/server/stdio.js";
 
 const server = new McpServer({
@@ -18,9 +18,7 @@ type Queries = {
 
 server.tool("research", {prompt: z.string()}, async ({prompt}, ctx) => {
     const queries = await sampleText(ctx, "planner", `Query: ${prompt}`);
-
     const parsedQueries = JSON.parse(queries) as Queries;
-
     const searches = [] as string[];
 
     for (const search of parsedQueries.searches) {
