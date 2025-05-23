@@ -43,7 +43,7 @@ type Nanobot struct {
 }
 
 func (n *Nanobot) Customize(cmd *cobra.Command) {
-	cmd.Short = "Nanobot: MCP Agent Runtime"
+	cmd.Short = "Nanobot: Build Agents with MCP"
 	cmd.Example = `  # Run the example vibe coder Nanobot
   nanobot run vibe-coder
 
