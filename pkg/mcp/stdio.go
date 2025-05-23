@@ -89,7 +89,7 @@ func (s *Stdio) Start(ctx context.Context, handler wireHandler) error {
 
 func (s *Stdio) start(ctx context.Context, handler wireHandler) error {
 	buf := bufio.NewScanner(s.stdout)
-	buf.Buffer(make([]byte, 0, 1024), 1024*1024*1024)
+	buf.Buffer(make([]byte, 0, 1024), 10*1024*1024)
 	for buf.Scan() {
 		text := strings.TrimSpace(buf.Text())
 		log.Messages(ctx, s.server, false, []byte(text))

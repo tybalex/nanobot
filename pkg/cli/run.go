@@ -64,7 +64,7 @@ func (r *Run) getRoots() ([]mcp.Root, error) {
 	)
 
 	if len(rootDefs) == 0 {
-		rootDefs = []string{"Current Directory:."}
+		rootDefs = []string{"cwd:."}
 	}
 
 	for _, root := range rootDefs {

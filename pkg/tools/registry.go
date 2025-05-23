@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"regexp"
 	"slices"
 	"strings"
 	"sync"
@@ -44,12 +45,23 @@ func completeOptions(opts ...RegistryOptions) RegistryOptions {
 	return options
 }
 
+var validEnvVarName = regexp.MustCompile(`^[A-Z_][A-Z0-9_]*$`)
+
 func NewRegistry(env map[string]string, config types.Config, opts ...RegistryOptions) *Registry {
 	if env == nil {
 		env = make(map[string]string)
 	}
 	for k, v := range mcp.ReplaceMap(env, config.Env) {
 		env[k] = v
+	}
+	roots := completeOptions(opts...).Roots
+	for _, root := range roots {
+		if root.Name != "" && strings.HasPrefix(root.URI, "file://") {
+			name := strings.ToUpper(root.Name)
+			if validEnvVarName.MatchString(name) {
+				env["ROOT_"+name] = strings.TrimPrefix(root.URI, "file://")
+			}
+		}
 	}
 	return &Registry{
 		servers: make(map[string]map[string]*mcp.Client),

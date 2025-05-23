@@ -148,6 +148,9 @@ func (s *HTTPClient) startSSE(ctx context.Context, msg *Message) error {
 		for {
 			message, ok := messages.readNextMessage()
 			if !ok {
+				if messages.err() != nil {
+					log.Errorf(ctx, "failed to read SSE message: %v", messages.err())
+				}
 				return
 			}
 			var msg Message
@@ -261,8 +264,10 @@ type SSEStream struct {
 }
 
 func newSSEStream(input io.Reader) *SSEStream {
+	lines := bufio.NewScanner(input)
+	lines.Buffer(make([]byte, 0, 1024), 10*1024*1024)
 	return &SSEStream{
-		lines: bufio.NewScanner(input),
+		lines: lines,
 	}
 }
 
