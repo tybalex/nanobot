@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"maps"
@@ -148,8 +149,12 @@ func (s *HTTPClient) startSSE(ctx context.Context, msg *Message) error {
 		for {
 			message, ok := messages.readNextMessage()
 			if !ok {
-				if messages.err() != nil {
-					log.Errorf(ctx, "failed to read SSE message: %v", messages.err())
+				if err := messages.err(); err != nil {
+					if errors.Is(err, context.Canceled) {
+						log.Debugf(ctx, "context canceled reading SSE message: %v", messages.err())
+					} else {
+						log.Errorf(ctx, "failed to read SSE message: %v", messages.err())
+					}
 				}
 				return
 			}
