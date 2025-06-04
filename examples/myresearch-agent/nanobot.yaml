@@ -1,0 +1,14 @@
+publish:
+  instruction: you are a helpful research assistant.
+  entrypoint: myresearch
+
+agents:
+  myresearch:
+    model: gpt-4o
+    instructions: You are a research agent. You are given a research question and you must answer it. You must use the tools provided to you to answer the question.
+    toolChoice: auto
+    tools: ["mcp_server"]
+mcpServers:
+  mcp_server:
+    command: "uv"
+    args: [ "run", "-m", "agent.mcp_server" ]

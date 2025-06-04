@@ -1,0 +1,18 @@
+[project]
+name = "myresearch-agent"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.115.12",
+    "fastmcp>=2.6.1",
+    "google-genai>=1.18.0",
+    "langchain>=0.3.19",
+    "langchain-google-genai>=2.1.5",
+    "langgraph>=0.2.6",
+    "langgraph-api>=0.2.43",
+    "langgraph-cli>=0.2.11",
+    "langgraph-sdk>=0.1.57",
+    "python-dotenv>=1.0.1",
+]
