@@ -50,6 +50,11 @@ For Windows there are binaries in the [releases](https://github.com/nanobot-ai/n
 
 ## Running
 
+export openai key by
+```
+ export OPENAI_API_KEY=xxx
+```
+
 ### Chat
 
 Doing `nanobot run [FILE|DIRECTORY]` will start an interactive chat session with the agent pointed to
