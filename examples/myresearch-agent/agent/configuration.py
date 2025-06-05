@@ -39,7 +39,7 @@ class Configuration(BaseModel):
         metadata={"description": "The maximum number of research loops to perform."},
     )
     reasoning_model: str = Field(
-        default="gemini-2.5-flash-preview-04-17",
+        default="gemini-2.5-pro-preview-05-06",
         metadata={
             "description": "The name of the language model to use for the agent's reasoning."
         },

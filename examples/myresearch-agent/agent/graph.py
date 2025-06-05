@@ -290,4 +290,4 @@ builder.add_conditional_edges(
 # Finalize the answer
 builder.add_edge("finalize_answer", END)
 
-graph = builder.compile(name="pro-search-agent")
+graph = builder.compile(name="research-agent")

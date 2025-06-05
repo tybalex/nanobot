@@ -1,8 +1,6 @@
 publish:
   introduction: |-
-    This is a research bot that can help you with research queries. It will first come up with
-    a set of web searches to perform, then it will perform those searches and summarize the
-    results. Finally, it will write a detailed report based on the findings.
+    This is a research bot that can help you with research queries.
     
     Each prompt will be a new report. This agent does not chat.
     
@@ -11,11 +9,18 @@ publish:
 
 agents:
   planner:
-    model: gpt-4o
+    model: gpt-4.1
     chatHistory: false
     instructions: |-
-      You are a helpful research assistant. Given a query, come up with a set of web searches
-      to perform to best answer the query. Output between 5 and 20 terms to query for.
+      Your goal is to generate sophisticated and diverse web search queries. These queries are intended for an advanced automated web research tool capable of analyzing complex results, following links, and synthesizing information.
+      Instructions:
+      - Always prefer a single search query, only add another query if the original question requests multiple aspects or elements and one query is not enough.
+      - Each query should focus on one specific aspect of the original question.
+      - Don't produce more than 20 queries.
+      - Queries should be diverse, if the topic is broad, generate more than 1 query.
+      - Don't generate multiple similar queries, 1 is enough.
+      - Query should ensure that the most current information is gathered. The current date is {current_date}.
+
     output:
       strict: true
       schema:
@@ -39,35 +44,64 @@ agents:
                   description: The search term to use for the web search.
 
   searchAgent:
-    model: gpt-4o
+    model: gpt-4.1
     chatHistory: false
     instructions: |-
-      You are a research assistant. Given a search term, you search the web for that term and
-      produce a concise summary of the results. The summary must 2-3 paragraphs and less than 300
-      words. Capture the main points. Write succinctly, no need to have complete sentences or good
-      grammar. This will be consumed by someone synthesizing a report, so its vital you capture the
-      essence and ignore any fluff. Do not include any additional commentary other than the summary
-      itself.
+      Conduct targeted Google Searches to gather the most recent, credible information on topic you are given and synthesize it into a verifiable text artifact.
+      Instructions:
+      - Conduct multiple, diverse searches to gather comprehensive information.
+      - Consolidate key findings while meticulously tracking the source(s) for each specific piece of information.
+      - The output should be a well-written summary or report based on your search findings. 
+      - Only include the information found in the search results, don't make up any information.
     toolChoice: required
     tools:
       - search
+
+  reflection:
+    model: gpt-4.1
+    chatHistory: false
+    instructions: |-
+      You are an expert research assistant analyzing summaries about the given user query and search results summaries.
+      Instructions:
+      - Identify knowledge gaps or areas that need deeper exploration and generate a follow-up query. (1 or multiple).
+      - If provided summaries are sufficient to answer the user's question, don't generate a follow-up query.
+      - If there is a knowledge gap, generate a follow-up query that would help expand your understanding.
+      - Focus on technical details, implementation specifics, or emerging trends that weren't fully covered.
+      Requirements:
+      - Ensure the follow-up query is self-contained and includes necessary context for web search.
+
+    output:
+      strict: true
+      schema:
+        type: object
+        additionalProperties: false
+        required: [ is_sufficient, knowledge_gap, follow_up_query ]
+        properties:
+          is_sufficient:
+            type: boolean
+            description: true or false, whether the provided summaries are sufficient to answer the user's question.
+          knowledge_gap:
+            type: string
+            description: Describe what information is missing or needs clarification
+          follow_up_query:
+            type: string
+            description: a specific follow-up question to further address the knowledge gap
 
   writer:
     model: o3-mini
     chatHistory: false
     instructions: |-
-      You are a senior researcher tasked with writing a cohesive report for a research query.
-      You will be provided with the original query, and some initial research done by a research
-      assistant.
-      
-      You should first come up with an outline for the report that describes the structure and
-      flow of the report. Then, generate the report and return that as your final output.
-      
-      The final output should be in markdown format, and it should be lengthy and detailed. Aim
-      for 5-10 pages of content, at least 1000 words.
+      Generate a high-quality answer to the user's question based on the provided summaries.
+      Instructions:
+      - You are the final step of a multi-step research process, don't mention that you are the final step. 
+      - You have access to all the information gathered from the previous steps.
+      - You have access to the user's question.
+      - Generate a high-quality answer to the user's question based on the provided summaries and the user's question.
+      - you MUST include all the citations from the summaries in the answer correctly.
+
     output:
       type: object
-      required: [ short_summary, markdown_report, follow_up_questions ]
+      required: [ short_summary, markdown_report]
       properties:
         short_summary:
           type: string

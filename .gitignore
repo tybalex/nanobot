@@ -8,3 +8,5 @@ bin/*
 nanobot
 node_modules/
 releases/*
+**/__pycache__/
+
