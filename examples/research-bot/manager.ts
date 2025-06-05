@@ -5,7 +5,7 @@ import {StdioServerTransport} from "@modelcontextprotocol/sdk/server/stdio.js";
 
 const server = new McpServer({
     name: "Research Bot",
-    description: "A bot that helps you find research papers.",
+    description: "A bot that helps you research web information and answer your question.",
     version: "1.0.0",
 });
 
@@ -25,7 +25,7 @@ type ReflectionResults = {
 const currentDateTime = new Date().toISOString();
 
 server.tool("research", {prompt: z.string()}, async ({prompt}, ctx) => {
-    const queries = await sampleText(ctx, "planner", `Query: ${prompt}`);
+    const queries = await sampleText(ctx, "planner", `Current date and time today: ${currentDateTime}\n User question: ${prompt}`);
     const parsedQueries = JSON.parse(queries) as Queries;
 
     const max_loop = 5;
@@ -38,9 +38,9 @@ server.tool("research", {prompt: z.string()}, async ({prompt}, ctx) => {
         let this_search_query = search.query;
 
         while (loop < max_loop && !is_sufficient) { // the web search & reflection cycle
-            const searchResult = await sampleText(ctx, "searchAgent", `Search term: ${this_search_query}\nReason for searching: ${search.reason}`);
+            const searchResult = await sampleText(ctx, "searchAgent", `Current date and time today: ${currentDateTime}\nSearch term: ${this_search_query}\nReason for searching: ${search.reason}`);
             this_search_results.push(searchResult);
-            const reflection_results = await sampleText(ctx, "reflection", `Original user query: ${prompt}\nSearch results: ${JSON.stringify(this_search_results)}\n`);
+            const reflection_results = await sampleText(ctx, "reflection", `Original user question: ${prompt}\nSearch results: ${JSON.stringify(this_search_results)}\n`);
             const parsedReflectionResults = JSON.parse(reflection_results) as ReflectionResults;
             is_sufficient = parsedReflectionResults.is_sufficient;
             if (is_sufficient) { // condition for either move forward to final report or continue the web search & reflection cycle
@@ -53,11 +53,10 @@ server.tool("research", {prompt: z.string()}, async ({prompt}, ctx) => {
         searches.push(...this_search_results);
     }
     
+    const final_report = await sampleText(ctx, "writer",
+        `Current date and time: ${currentDateTime}\nOriginal user question: ${prompt}\nSummarized search results: ${JSON.stringify(searches)}\n\n`)
 
-    const paper = await sampleText(ctx, "writer",
-        `Current date and time: ${currentDateTime}\nOriginal query: ${prompt}\nSummarized search results: ${JSON.stringify(searches)}\n\n`)
-
-    return text(paper);
+    return text(final_report);
 })
 
 const transport = new StdioServerTransport()

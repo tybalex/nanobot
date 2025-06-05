@@ -9,12 +9,12 @@ publish:
 
 agents:
   planner:
-    model: gpt-4.1
+    model: o3-mini
     chatHistory: false
     instructions: |-
       Your goal is to generate sophisticated and diverse web search queries. These queries are intended for an advanced automated web research tool capable of analyzing complex results, following links, and synthesizing information.
       Instructions:
-      - Always prefer a single search query, only add another query if the original question requests multiple aspects or elements and one query is not enough.
+      - You should prefer a single search query, only add another query if the original question requests multiple aspects or elements and one query is not enough.
       - Each query should focus on one specific aspect of the original question.
       - Don't produce more than 20 queries.
       - Queries should be diverse, if the topic is broad, generate more than 1 query.
@@ -30,7 +30,7 @@ agents:
         properties:
           searches:
             type: array
-            description: A list of web searches to perform to best answer the query.
+            description: A list of web searches to perform to best answer the user's question.
             items:
               type: object
               required: [ reason, query ]
@@ -38,7 +38,7 @@ agents:
               properties:
                 reason:
                   type: string
-                  description: Your reasoning for why this search is important to the query.
+                  description: Your reasoning for why this search is important to the user's question.
                 query:
                   type: string
                   description: The search term to use for the web search.
@@ -58,13 +58,13 @@ agents:
       - search
 
   reflection:
-    model: gpt-4.1
+    model: o3-mini
     chatHistory: false
     instructions: |-
       You are an expert research assistant analyzing summaries about the given user query and search results summaries.
       Instructions:
       - Identify knowledge gaps or areas that need deeper exploration and generate a follow-up query. (1 or multiple).
-      - If provided summaries are sufficient to answer the user's question, don't generate a follow-up query.
+      - IF provided summaries are sufficient to answer the user's question, do not generate a follow-up query.
       - If there is a knowledge gap, generate a follow-up query that would help expand your understanding.
       - Focus on technical details, implementation specifics, or emerging trends that weren't fully covered.
       Requirements:
