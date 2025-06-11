@@ -1,3 +1,8 @@
+FROM cgr.dev/chainguard/go AS builder
+WORKDIR /app
+COPY . .
+RUN make build
+
 FROM cgr.dev/chainguard/wolfi-base:latest
 RUN apk add --no-cache -U go iproute2 npm uv nodejs python-3.13 socat && \
     mkdir /mcp && \
@@ -26,6 +31,7 @@ exec socat \
   TCP-LISTEN:${LISTEN_PORT:-8443},fork,reuseaddr \
   OPENSSL:${TARGET_HOST}:${TARGET_PORT:-8080},cert=/mcp/certs/client.crt,key=/mcp/certs/client.key,cafile=/mcp/certs/ca.crt,verify=0
 EOF
+COPY --from=builder /app/bin/nanobot /usr/bin/nanobot
 ENV HOME=/mcp
 WORKDIR /mcp
 VOLUME /mcp
