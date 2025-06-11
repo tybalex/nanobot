@@ -4,7 +4,7 @@ publish:
 
 agents:
   main-agent:
-    model: o3-mini
+    model: o4-mini
     instructions: You are a research agent. You are given a research question and you must answer it. You must use the tools provided to you to answer the question. Get the current date and time using the get_date_time tool before you start your research.
     toolChoice: auto
     tools: ["mcp_server"]
