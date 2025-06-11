@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/obot-platform/nanobot/pkg/uuid"
+	"github.com/nanobot-ai/nanobot/pkg/uuid"
 )
 
 var _ wire = (*serverWire)(nil)

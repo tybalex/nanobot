@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/obot-platform/nanobot/pkg/printer"
+	"github.com/nanobot-ai/nanobot/pkg/printer"
 )
 
 func PrintProgress(msg json.RawMessage) bool {

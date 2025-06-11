@@ -9,11 +9,11 @@ import (
 	"regexp"
 	"slices"
 
-	"github.com/obot-platform/nanobot/pkg/expr"
-	"github.com/obot-platform/nanobot/pkg/mcp"
-	"github.com/obot-platform/nanobot/pkg/runtime"
-	"github.com/obot-platform/nanobot/pkg/tools"
-	"github.com/obot-platform/nanobot/pkg/types"
+	"github.com/nanobot-ai/nanobot/pkg/expr"
+	"github.com/nanobot-ai/nanobot/pkg/mcp"
+	"github.com/nanobot-ai/nanobot/pkg/runtime"
+	"github.com/nanobot-ai/nanobot/pkg/tools"
+	"github.com/nanobot-ai/nanobot/pkg/types"
 )
 
 type Server struct {

@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/obot-platform/nanobot/pkg/complete"
-	"github.com/obot-platform/nanobot/pkg/mcp"
-	"github.com/obot-platform/nanobot/pkg/tools"
-	"github.com/obot-platform/nanobot/pkg/types"
+	"github.com/nanobot-ai/nanobot/pkg/complete"
+	"github.com/nanobot-ai/nanobot/pkg/mcp"
+	"github.com/nanobot-ai/nanobot/pkg/tools"
+	"github.com/nanobot-ai/nanobot/pkg/types"
 )
 
 func (a *Agents) toolCalls(ctx context.Context, run *run, opts []types.CompletionOptions) error {

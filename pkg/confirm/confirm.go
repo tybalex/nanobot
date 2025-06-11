@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/obot-platform/nanobot/pkg/mcp"
-	"github.com/obot-platform/nanobot/pkg/types"
-	"github.com/obot-platform/nanobot/pkg/uuid"
+	"github.com/nanobot-ai/nanobot/pkg/mcp"
+	"github.com/nanobot-ai/nanobot/pkg/types"
+	"github.com/nanobot-ai/nanobot/pkg/uuid"
 )
 
 const Timeout = 15 * time.Minute

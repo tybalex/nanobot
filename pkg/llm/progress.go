@@ -3,8 +3,8 @@ package llm
 import (
 	"encoding/json"
 
-	"github.com/obot-platform/nanobot/pkg/llm/anthropic"
-	"github.com/obot-platform/nanobot/pkg/llm/responses"
+	"github.com/nanobot-ai/nanobot/pkg/llm/anthropic"
+	"github.com/nanobot-ai/nanobot/pkg/llm/responses"
 )
 
 func PrintProgress(msg json.RawMessage) bool {

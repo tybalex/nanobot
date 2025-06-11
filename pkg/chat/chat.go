@@ -10,12 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/obot-platform/nanobot/pkg/confirm"
-	"github.com/obot-platform/nanobot/pkg/llm"
-	"github.com/obot-platform/nanobot/pkg/mcp"
-	"github.com/obot-platform/nanobot/pkg/printer"
-	"github.com/obot-platform/nanobot/pkg/types"
-	"github.com/obot-platform/nanobot/pkg/uuid"
+	"github.com/nanobot-ai/nanobot/pkg/confirm"
+	"github.com/nanobot-ai/nanobot/pkg/llm"
+	"github.com/nanobot-ai/nanobot/pkg/mcp"
+	"github.com/nanobot-ai/nanobot/pkg/printer"
+	"github.com/nanobot-ai/nanobot/pkg/types"
+	"github.com/nanobot-ai/nanobot/pkg/uuid"
 )
 
 func Chat(ctx context.Context, listenAddress string, confirmations *confirm.Service, autoConfirm bool, prompt, output string) error {

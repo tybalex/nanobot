@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/obot-platform/nanobot/pkg/complete"
-	"github.com/obot-platform/nanobot/pkg/envvar"
-	"github.com/obot-platform/nanobot/pkg/log"
-	"github.com/obot-platform/nanobot/pkg/version"
+	"github.com/nanobot-ai/nanobot/pkg/complete"
+	"github.com/nanobot-ai/nanobot/pkg/envvar"
+	"github.com/nanobot-ai/nanobot/pkg/log"
+	"github.com/nanobot-ai/nanobot/pkg/version"
 )
 
 type Client struct {

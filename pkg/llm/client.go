@@ -3,10 +3,10 @@ package llm
 import (
 	"context"
 
-	"github.com/obot-platform/nanobot/pkg/llm/anthropic"
-	"github.com/obot-platform/nanobot/pkg/llm/responses"
-	"github.com/obot-platform/nanobot/pkg/mcp"
-	"github.com/obot-platform/nanobot/pkg/types"
+	"github.com/nanobot-ai/nanobot/pkg/llm/anthropic"
+	"github.com/nanobot-ai/nanobot/pkg/llm/responses"
+	"github.com/nanobot-ai/nanobot/pkg/mcp"
+	"github.com/nanobot-ai/nanobot/pkg/types"
 )
 
 var _ types.Completer = (*Client)(nil)

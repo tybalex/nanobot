@@ -13,10 +13,10 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/obot-platform/nanobot/pkg/log"
-	"github.com/obot-platform/nanobot/pkg/supervise"
-	"github.com/obot-platform/nanobot/pkg/uuid"
-	"github.com/obot-platform/nanobot/pkg/version"
+	"github.com/nanobot-ai/nanobot/pkg/log"
+	"github.com/nanobot-ai/nanobot/pkg/supervise"
+	"github.com/nanobot-ai/nanobot/pkg/uuid"
+	"github.com/nanobot-ai/nanobot/pkg/version"
 )
 
 // Must start with git@ or https:// or ssh://

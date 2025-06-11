@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/obot-platform/nanobot/pkg/log"
+	"github.com/nanobot-ai/nanobot/pkg/log"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"sigs.k8s.io/yaml"
 )

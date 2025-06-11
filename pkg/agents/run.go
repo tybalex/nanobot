@@ -8,11 +8,11 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/obot-platform/nanobot/pkg/complete"
-	"github.com/obot-platform/nanobot/pkg/confirm"
-	"github.com/obot-platform/nanobot/pkg/mcp"
-	"github.com/obot-platform/nanobot/pkg/tools"
-	"github.com/obot-platform/nanobot/pkg/types"
+	"github.com/nanobot-ai/nanobot/pkg/complete"
+	"github.com/nanobot-ai/nanobot/pkg/confirm"
+	"github.com/nanobot-ai/nanobot/pkg/mcp"
+	"github.com/nanobot-ai/nanobot/pkg/tools"
+	"github.com/nanobot-ai/nanobot/pkg/types"
 )
 
 type Agents struct {

@@ -7,8 +7,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/obot-platform/nanobot/pkg/expr"
-	"github.com/obot-platform/nanobot/pkg/log"
+	"github.com/nanobot-ai/nanobot/pkg/expr"
+	"github.com/nanobot-ai/nanobot/pkg/log"
 )
 
 func ReplaceString(envs map[string]string, str string) string {

@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/obot-platform/nanobot/pkg/expr"
-	"github.com/obot-platform/nanobot/pkg/mcp"
-	"github.com/obot-platform/nanobot/pkg/types"
-	"github.com/obot-platform/nanobot/pkg/uuid"
+	"github.com/nanobot-ai/nanobot/pkg/expr"
+	"github.com/nanobot-ai/nanobot/pkg/mcp"
+	"github.com/nanobot-ai/nanobot/pkg/types"
+	"github.com/nanobot-ai/nanobot/pkg/uuid"
 )
 
 type flowContext struct {

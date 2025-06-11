@@ -1,7 +1,7 @@
 package agents
 
 import (
-	"github.com/obot-platform/nanobot/pkg/types"
+	"github.com/nanobot-ai/nanobot/pkg/types"
 )
 
 type run struct {

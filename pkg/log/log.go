@@ -9,7 +9,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/obot-platform/nanobot/pkg/printer"
+	"github.com/nanobot-ai/nanobot/pkg/printer"
 )
 
 var (

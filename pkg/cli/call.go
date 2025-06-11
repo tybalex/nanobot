@@ -3,7 +3,7 @@ package cli
 import (
 	"os"
 
-	"github.com/obot-platform/nanobot/pkg/chat"
+	"github.com/nanobot-ai/nanobot/pkg/chat"
 	"github.com/spf13/cobra"
 )
 

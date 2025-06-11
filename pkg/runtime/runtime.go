@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/obot-platform/nanobot/pkg/agents"
-	"github.com/obot-platform/nanobot/pkg/confirm"
-	"github.com/obot-platform/nanobot/pkg/llm"
-	"github.com/obot-platform/nanobot/pkg/mcp"
-	"github.com/obot-platform/nanobot/pkg/sampling"
-	"github.com/obot-platform/nanobot/pkg/tools"
-	"github.com/obot-platform/nanobot/pkg/types"
+	"github.com/nanobot-ai/nanobot/pkg/agents"
+	"github.com/nanobot-ai/nanobot/pkg/confirm"
+	"github.com/nanobot-ai/nanobot/pkg/llm"
+	"github.com/nanobot-ai/nanobot/pkg/mcp"
+	"github.com/nanobot-ai/nanobot/pkg/sampling"
+	"github.com/nanobot-ai/nanobot/pkg/tools"
+	"github.com/nanobot-ai/nanobot/pkg/types"
 )
 
 type Runtime struct {

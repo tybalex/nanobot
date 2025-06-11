@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/obot-platform/nanobot/pkg/types"
+	"github.com/nanobot-ai/nanobot/pkg/types"
 )
 
 func Load(ctx context.Context, path string, profiles ...string) (cfg *types.Config, cwd string, err error) {

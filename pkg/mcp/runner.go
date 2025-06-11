@@ -11,11 +11,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/obot-platform/nanobot/pkg/envvar"
-	"github.com/obot-platform/nanobot/pkg/log"
-	"github.com/obot-platform/nanobot/pkg/mcp/sandbox"
-	"github.com/obot-platform/nanobot/pkg/supervise"
-	"github.com/obot-platform/nanobot/pkg/system"
+	"github.com/nanobot-ai/nanobot/pkg/envvar"
+	"github.com/nanobot-ai/nanobot/pkg/log"
+	"github.com/nanobot-ai/nanobot/pkg/mcp/sandbox"
+	"github.com/nanobot-ai/nanobot/pkg/supervise"
+	"github.com/nanobot-ai/nanobot/pkg/system"
 )
 
 type runner struct {

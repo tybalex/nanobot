@@ -11,7 +11,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/obot-platform/nanobot/pkg/log"
+	"github.com/nanobot-ai/nanobot/pkg/log"
 )
 
 // TLSClient represents a non-TLS server that proxies connections to a TLS server

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/obot-platform/nanobot/pkg/complete"
-	"github.com/obot-platform/nanobot/pkg/uuid"
+	"github.com/nanobot-ai/nanobot/pkg/complete"
+	"github.com/nanobot-ai/nanobot/pkg/uuid"
 )
 
 type MessageHandler interface {

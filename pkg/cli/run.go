@@ -10,12 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/obot-platform/nanobot/pkg/chat"
-	"github.com/obot-platform/nanobot/pkg/confirm"
-	"github.com/obot-platform/nanobot/pkg/log"
-	"github.com/obot-platform/nanobot/pkg/mcp"
-	"github.com/obot-platform/nanobot/pkg/runtime"
-	"github.com/obot-platform/nanobot/pkg/server"
+	"github.com/nanobot-ai/nanobot/pkg/chat"
+	"github.com/nanobot-ai/nanobot/pkg/confirm"
+	"github.com/nanobot-ai/nanobot/pkg/log"
+	"github.com/nanobot-ai/nanobot/pkg/mcp"
+	"github.com/nanobot-ai/nanobot/pkg/runtime"
+	"github.com/nanobot-ai/nanobot/pkg/server"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 )
