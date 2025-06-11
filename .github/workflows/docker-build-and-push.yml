@@ -45,7 +45,7 @@ jobs:
           context: .
           push: true
           pull: true
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           tags: |
             ghcr.io/${{ github.repository }}:${{ github.ref_name }}
 

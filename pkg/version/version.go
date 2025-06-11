@@ -7,7 +7,7 @@ import (
 
 var (
 	Tag       = "v0.0.0-dev"
-	BaseImage = "nanobot-base"
+	BaseImage = "ghcr.io/nanobot-ai/nanobot:main"
 )
 
 func Get() Version {

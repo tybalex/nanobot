@@ -20,6 +20,8 @@ builds:
     ldflags:
       - -s
       - -w
+      - -X "github.com/nanobot-ai/nanobot/pkg/version.Tag=v{{ .Version }}"
+      - -X "github.com/nanobot-ai/nanobot/pkg/version.BaseImage=ghcr.io/nanobot-ai/nanobot:v{{ .Version }}"
 universal_binaries:
   - id: mac
     ids:
