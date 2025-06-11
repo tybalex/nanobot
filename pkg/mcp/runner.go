@@ -74,10 +74,13 @@ func (r *runner) newCommand(ctx context.Context, currentEnv map[string]string, r
 		}, nil
 	}
 
-	var rootPaths []string
+	var rootPaths []sandbox.Root
 	for _, root := range root {
 		if strings.HasPrefix(root.URI, "file://") {
-			rootPaths = append(rootPaths, root.URI[7:])
+			rootPaths = append(rootPaths, sandbox.Root{
+				Name: root.Name,
+				Path: root.URI[7:],
+			})
 		}
 	}
 

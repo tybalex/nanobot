@@ -542,7 +542,7 @@ definitions:
       output:
         $ref: "#/definitions/OutputSchema"
       truncation:
-        type: boolean
+        type: string
         description: |
           Whether the chat history should be truncated to fit within the LLM's.
           This is dependent on the LLM and its capabilities and currently supported

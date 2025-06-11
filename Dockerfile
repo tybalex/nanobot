@@ -1,5 +1,5 @@
 FROM cgr.dev/chainguard/wolfi-base:latest
-RUN apk add --no-cache -U iproute2 npm uv nodejs python-3.13 socat && \
+RUN apk add --no-cache -U go iproute2 npm uv nodejs python-3.13 socat && \
     mkdir /mcp && \
     chmod 777 /mcp && \
     sed -i -e '/globalignorefile/d' -e '/python/d' /usr/lib/node_modules/npm/npmrc

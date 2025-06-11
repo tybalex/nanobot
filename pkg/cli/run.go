@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -212,6 +213,9 @@ func (r *Run) runMCP(ctx context.Context, runtime *runtime.Runtime, l net.Listen
 		err = s.ListenAndServe()
 	} else {
 		err = s.Serve(l)
+	}
+	if errors.Is(err, http.ErrServerClosed) {
+		return nil
 	}
 	log.Debugf(ctx, "Server stopped: %v", err)
 	return err

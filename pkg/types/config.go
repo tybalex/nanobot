@@ -60,7 +60,7 @@ func (c Config) Validate(allowLocal bool) error {
 }
 
 func validateMCPServer(mcpServerName string, mcpServer mcp.Server, allowLocal bool) error {
-	if allowLocal && strings.HasPrefix(mcpServer.Source.Repo, "/") {
+	if allowLocal {
 		return nil
 	}
 
@@ -72,6 +72,7 @@ func validateMCPServer(mcpServerName string, mcpServer mcp.Server, allowLocal bo
 			return fmt.Errorf("mcpServer %q has invalid repo URL %q, must start with http://, https://, git@, or ssh://", mcpServerName, mcpServer.Source.Repo)
 		}
 	}
+
 	return nil
 }
 

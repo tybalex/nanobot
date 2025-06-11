@@ -48,12 +48,12 @@ func appendToLine(prefix, content string) {
 		}
 	}
 
-	_, _ = fmt.Fprint(os.Stdout, content)
+	_, _ = fmt.Fprint(os.Stderr, content)
 	currentLine += content
 }
 
 func newline() {
-	_, _ = fmt.Fprint(os.Stdout, "\n")
+	_, _ = fmt.Fprint(os.Stderr, "\n")
 	currentLine = ""
 	lastPrefix = ""
 }

@@ -19,19 +19,27 @@ import (
 	"github.com/nanobot-ai/nanobot/pkg/version"
 )
 
-// Must start with git@ or https:// or ssh://
-var validChars = regexp.MustCompile(`^[a-zA-Z0-9@:/._-]+$`)
+var (
+	validChars = regexp.MustCompile(`^[a-zA-Z0-9@:/._-]+$`)
+	// Must start with git@ or https:// or ssh:// or http://
+	gitRepoPrefix = regexp.MustCompile(`^(git@|https://|ssh://|http://)`)
+)
 
 type Command struct {
 	PublishPorts []string
 	ReversePorts []int
-	Roots        []string
+	Roots        []Root
 	Command      string
 	Args         []string
 	Env          []string
 	BaseImage    string
 	Dockerfile   string
 	Source       Source
+}
+
+type Root struct {
+	Name string
+	Path string
 }
 
 type Source struct {
@@ -105,25 +113,27 @@ func NewCmd(ctx context.Context, sandbox Command) (*Cmd, error) {
 		return nil, fmt.Errorf("failed to get user cache directory: %w", err)
 	}
 
-	cacheDir = filepath.Join(cacheDir, "nanobot")
-	if err := os.MkdirAll(filepath.Join(cacheDir, ".cache"), 0755); err != nil {
-		return nil, fmt.Errorf("failed to create cache directory: %w", err)
-	}
-	if err := os.MkdirAll(filepath.Join(cacheDir, ".npm"), 0755); err != nil {
-		return nil, fmt.Errorf("failed to create cache directory: %w", err)
-	}
-
 	containerName := fmt.Sprintf("nanobot-%s", strings.Split(uuid.String(), "-")[0])
 	dockerArgs := []string{"run",
-		"-v", fmt.Sprintf("%s/.cache:/mcp/.cache", cacheDir),
-		"-v", fmt.Sprintf("%s/.npm:/mcp/.npm", cacheDir),
 		"-i", "--name", containerName}
+
+	cacheDir = filepath.Join(cacheDir, "nanobot")
+	for _, dir := range []string{".cache", ".npm", "go/pkg"} {
+		if err := os.MkdirAll(filepath.Join(cacheDir, dir), 0755); err != nil {
+			return nil, fmt.Errorf("failed to create cache directory: %w", err)
+		}
+		dockerArgs = append(dockerArgs, "-v", fmt.Sprintf("%s/%s:/mcp/%s", cacheDir, dir, dir))
+	}
+
 	dockerArgs = append(dockerArgs, "-u", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()))
 	for _, k := range sandbox.Env {
 		dockerArgs = append(dockerArgs, "-e", k)
 	}
-	for _, path := range sandbox.Roots {
-		dockerArgs = append(dockerArgs, "-v", path+":"+path)
+	for _, root := range sandbox.Roots {
+		if root.Name == "cwd" && sandbox.Source.Repo == "" && sandbox.Source.SubPath == "" {
+			dockerArgs = append(dockerArgs, "-w", root.Path)
+		}
+		dockerArgs = append(dockerArgs, "-v", root.Path+":"+root.Path)
 	}
 	for _, port := range sandbox.PublishPorts {
 		dockerArgs = append(dockerArgs, "-p", "127.0.0.1:"+port+":"+port)
@@ -151,6 +161,7 @@ func buildImage(ctx context.Context, baseImage string, config Command) (string, 
 	var (
 		source   = config.Source.Repo
 		fragment string
+		isGit    = gitRepoPrefix.MatchString(source)
 	)
 
 	if !validChars.MatchString(source) {
@@ -180,7 +191,14 @@ func buildImage(ctx context.Context, baseImage string, config Command) (string, 
 	gid := os.Getgid()
 
 	var cmd *exec.Cmd
-	if strings.HasPrefix(config.Source.Repo, "/") {
+	if isGit {
+		log.Infof(ctx, "Downloading source: %s", source)
+		cmd = exec.CommandContext(ctx, "docker", "build", "-q", "-")
+		cmd.Stdin = dockerFileToTar(fmt.Sprintf(`FROM %s
+USER %d:%d
+WORKDIR /mcp
+ADD %s /mcp`, baseImage, uid, gid, source))
+	} else {
 		log.Infof(ctx, "Copying source: %s", filepath.Join(config.Source.Repo, config.Source.SubPath))
 		srcPath := config.Source.SubPath
 		if srcPath == "" {
@@ -191,13 +209,6 @@ func buildImage(ctx context.Context, baseImage string, config Command) (string, 
 USER %d:%d
 WORKDIR /mcp
 COPY %s /mcp`, baseImage, uid, gid, srcPath))
-	} else {
-		log.Infof(ctx, "Downloading source: %s", source)
-		cmd = exec.CommandContext(ctx, "docker", "build", "-q", "-")
-		cmd.Stdin = dockerFileToTar(fmt.Sprintf(`FROM %s
-USER %d:%d
-WORKDIR /mcp
-ADD %s /mcp`, baseImage, uid, gid, source))
 	}
 	out, err := cmd.CombinedOutput()
 	if err != nil {

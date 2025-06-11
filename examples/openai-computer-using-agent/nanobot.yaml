@@ -11,7 +11,6 @@ agents:
       You are a computer using agent. You have a chromium browser available to you.
       You must first call the open_url tool to go to a website and then you can navigate around.
       Your goal is to solve the users queries using the browser.
-    stateful: true
     truncation: auto
     tools: [browser/browser, browser/open_url]
     toolExtensions:
@@ -23,5 +22,6 @@ agents:
 
 mcpServers:
   browser:
+    source: .
     command: "uv"
     args: [ "run", "browsertool.py" ]

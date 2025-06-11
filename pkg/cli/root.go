@@ -165,15 +165,15 @@ func (n *Nanobot) loadEnv() (map[string]string, error) {
 }
 
 func (n *Nanobot) GetRuntime(ctx context.Context, cfgPath string, opts ...runtime.Options) (*runtime.Runtime, error) {
-	cfg, dir, err := config.Load(ctx, cfgPath, runtime.CompleteOptions(opts...).Profiles...)
+	cfg, _, err := config.Load(ctx, cfgPath, runtime.CompleteOptions(opts...).Profiles...)
 	if err != nil {
 		return nil, err
 	}
-	if dir != "." {
-		if err := os.Chdir(dir); err != nil {
-			return nil, fmt.Errorf("failed to change directory to %s: %w", dir, err)
-		}
-	}
+	//if dir != "." {
+	//	if err := os.Chdir(dir); err != nil {
+	//		return nil, fmt.Errorf("failed to change directory to %s: %w", dir, err)
+	//	}
+	//}
 
 	return runtime.NewRuntime(n.llmConfig(), *cfg, opts...), nil
 }

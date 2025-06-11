@@ -31,10 +31,8 @@ func PrintProgress(msg json.RawMessage) bool {
 	case "response.output_text.delta":
 		printer.Prefix("<-(llm)", delta.Delta)
 	case "response.content_part.done":
-		printer.Prefix("<-(llm)", "\n")
 	case "message_delta":
 	case "message_stop":
-		printer.Prefix("<-(llm)", "\n")
 	default:
 		return false
 	}

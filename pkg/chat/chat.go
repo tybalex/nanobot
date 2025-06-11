@@ -8,10 +8,11 @@ import (
 	"io"
 	"os"
 	"strings"
-	"time"
 
+	"github.com/nanobot-ai/nanobot/pkg/chat/prompter"
 	"github.com/nanobot-ai/nanobot/pkg/confirm"
 	"github.com/nanobot-ai/nanobot/pkg/llm"
+	"github.com/nanobot-ai/nanobot/pkg/log"
 	"github.com/nanobot-ai/nanobot/pkg/mcp"
 	"github.com/nanobot-ai/nanobot/pkg/printer"
 	"github.com/nanobot-ai/nanobot/pkg/types"
@@ -20,6 +21,9 @@ import (
 
 func Chat(ctx context.Context, listenAddress string, confirmations *confirm.Service, autoConfirm bool, prompt, output string) error {
 	progressToken := uuid.String()
+
+	promptDone, promptDoneCancel := context.WithCancel(ctx)
+	defer promptDoneCancel()
 
 	c, err := mcp.NewClient(ctx, "nanobot", mcp.Server{
 		BaseURL: "http://" + listenAddress,
@@ -32,7 +36,7 @@ func Chat(ctx context.Context, listenAddress string, confirmations *confirm.Serv
 			if llm.PrintProgress(msg.Params) {
 				return nil
 			}
-			printToolCall(msg.Params)
+			printToolCall(msg.Params, promptDoneCancel)
 			return nil
 		},
 	})
@@ -63,46 +67,34 @@ func Chat(ctx context.Context, listenAddress string, confirmations *confirm.Serv
 				out = f
 			}
 			if err := PrintResult(out, resp); err != nil {
-				fmt.Printf("Error: %v\n", err)
+				log.Errorf(ctx, "error printing: %v", err)
 			}
 		}
+		<-promptDone.Done()
 		return nil
 	}
 
 	_, _ = fmt.Fprintln(os.Stderr)
 	intro, _ := c.Session.ServerCapabilities.Experimental["nanobot/intro"].(string)
 	if intro != "" {
-		_, _ = fmt.Fprintf(os.Stderr, "%s\n", intro)
-	}
-
-	scanner := bufio.NewScanner(os.Stdin)
-
-	first := true
-	next := func() bool {
-		if !first {
-			// Arbitrary delay to prevent the progress from override the prompt.
-			// This is because the progress comes through the SSE channel where as the chat response
-			// comes from the POST response. So it's possible to get the POST response before the SSE
-			// responses are all done. (Yeah, annoying, I know. But switching to SSE and not HTTP streaming
-			// will fix this once I have SSE working.)
-			time.Sleep(300 * time.Millisecond)
-		}
-		first = false
-		fmt.Println()
-		fmt.Print("> ")
-		return scanner.Scan()
+		printer.Prefix("INTRO", intro+"\n")
 	}
 
 	context.AfterFunc(ctx, func() {
 		os.Exit(0)
 	})
 
-	for next() {
-		line := scanner.Text()
+	for {
+		line, err := prompter.ReadInput()
+		if err != nil {
+			return err
+		}
+
 		if strings.TrimSpace(line) == "" {
 			continue
 		}
-		_, err := c.Call(ctx, types.AgentTool, map[string]any{
+
+		_, err = c.Call(ctx, types.AgentTool, map[string]any{
 			"prompt": line,
 		}, mcp.CallOption{
 			ProgressToken: progressToken,
@@ -111,8 +103,6 @@ func Chat(ctx context.Context, listenAddress string, confirmations *confirm.Serv
 			fmt.Printf("Error: %v\n", err)
 		}
 	}
-
-	return nil
 }
 
 var always = map[string]struct{}{}
@@ -180,7 +170,7 @@ func handleConfirm(data map[string]any, confirmations *confirm.Service, autoConf
 	}
 }
 
-func printToolCall(params json.RawMessage) {
+func printToolCall(params json.RawMessage, seenAgentOut func()) {
 	var toolCall struct {
 		Data struct {
 			Type   string              `json:"type"`
@@ -188,6 +178,9 @@ func printToolCall(params json.RawMessage) {
 			Error  string              `json:"error,omitempty"`
 			Target string              `json:"target"`
 			Output *mcp.CallToolResult `json:"output,omitempty"`
+			Data   struct {
+				MCPToolName string `json:"mcpToolName"`
+			}
 		} `json:"data"`
 	}
 	if err := json.Unmarshal(params, &toolCall); err != nil || !strings.HasPrefix(toolCall.Data.Type, "nanobot/call") {
@@ -202,12 +195,14 @@ func printToolCall(params json.RawMessage) {
 		_ = types.Marshal(toolCall.Data.Input, &text)
 		printer.Prefix(fmt.Sprintf("->(%s)", toolCall.Data.Target), text)
 	}
-	if toolCall.Data.Output != nil {
+	if toolCall.Data.Output != nil && toolCall.Data.Data.MCPToolName != types.AgentTool {
 		for _, content := range toolCall.Data.Output.Content {
 			printer.Prefix(fmt.Sprintf("<-(%s)", toolCall.Data.Target), content.Text)
 		}
 	}
-
+	if toolCall.Data.Output != nil && toolCall.Data.Data.MCPToolName == types.AgentTool {
+		seenAgentOut()
+	}
 }
 
 func handleLog(msg mcp.LoggingMessage, confirmations *confirm.Service, autoConfirm bool) error {

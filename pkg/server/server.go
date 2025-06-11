@@ -174,6 +174,9 @@ func (s *Server) handleCallTool(ctx context.Context, msg mcp.Message, payload mc
 
 	result, err := s.runtime.Call(ctx, toolMapping.MCPServer, toolMapping.TargetName, payload.Arguments, tools.CallOptions{
 		ProgressToken: msg.ProgressToken(),
+		LogData: map[string]any{
+			"mcpToolName": payload.Name,
+		},
 	})
 	if err != nil {
 		return err

@@ -31,10 +31,8 @@ func PrintProgress(msg json.RawMessage) bool {
 			printer.Prefix("<-(llm)", delta.Delta.PartialJSON)
 		}
 	case "content_block_stop":
-		printer.Prefix("<-(llm)", "\n")
 	case "message_delta":
 	case "message_stop":
-		printer.Prefix("<-(llm)", "\n")
 	default:
 		return false
 	}

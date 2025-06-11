@@ -199,11 +199,13 @@ func (r *Service) SampleCall(ctx context.Context, agent string, args any, opts .
 type CallOptions struct {
 	ProgressToken any
 	AgentOverride types.AgentCall
+	LogData       map[string]any
 }
 
 func (o CallOptions) Merge(other CallOptions) (result CallOptions) {
 	result.ProgressToken = complete.Last(o.ProgressToken, other.ProgressToken)
 	result.AgentOverride = complete.Merge(o.AgentOverride, other.AgentOverride)
+	result.LogData = complete.MergeMap(o.LogData, other.LogData)
 	return
 }
 
@@ -239,6 +241,7 @@ func (r *Service) Call(ctx context.Context, server, tool string, args any, opts 
 				"id":     callID,
 				"target": target,
 				"input":  args,
+				"data":   opt.LogData,
 			},
 		})
 
@@ -251,6 +254,7 @@ func (r *Service) Call(ctx context.Context, server, tool string, args any, opts 
 						"id":     callID,
 						"target": target,
 						"output": ret,
+						"data":   opt.LogData,
 					},
 				})
 			} else {
@@ -261,6 +265,7 @@ func (r *Service) Call(ctx context.Context, server, tool string, args any, opts 
 						"id":     callID,
 						"target": target,
 						"error":  err.Error(),
+						"data":   opt.LogData,
 					},
 				})
 			}
