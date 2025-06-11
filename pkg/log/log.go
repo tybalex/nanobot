@@ -41,15 +41,15 @@ func StderrMessages(_ context.Context, server, line string) {
 }
 
 func Errorf(_ context.Context, format string, args ...any) {
-	printer.Prefix("ERROR:", fmt.Sprintf(format+"\n", args...))
+	printer.Prefix("ERROR", fmt.Sprintf(format+"\n", args...))
 }
 
 func Infof(_ context.Context, format string, args ...any) {
-	printer.Prefix("INFO:", fmt.Sprintf(format+"\n", args...))
+	printer.Prefix("INFO", fmt.Sprintf(format+"\n", args...))
 }
 
 func Fatalf(_ context.Context, format string, args ...any) {
-	printer.Prefix("FATAL:", fmt.Sprintf(format+"\n", args...))
+	printer.Prefix("FATAL", fmt.Sprintf(format+"\n", args...))
 	os.Exit(1)
 }
 
@@ -57,5 +57,5 @@ func Debugf(_ context.Context, format string, args ...any) {
 	if !DebugLog {
 		return
 	}
-	printer.Prefix("DEBUG:", fmt.Sprintf(format+"\n", args...))
+	printer.Prefix("DEBUG", fmt.Sprintf(format+"\n", args...))
 }

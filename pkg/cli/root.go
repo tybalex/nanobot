@@ -16,6 +16,7 @@ import (
 	"github.com/nanobot-ai/nanobot/pkg/llm/responses"
 	"github.com/nanobot-ai/nanobot/pkg/log"
 	"github.com/nanobot-ai/nanobot/pkg/runtime"
+	"github.com/nanobot-ai/nanobot/pkg/types"
 	"github.com/nanobot-ai/nanobot/pkg/version"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
@@ -164,16 +165,16 @@ func (n *Nanobot) loadEnv() (map[string]string, error) {
 	return env, nil
 }
 
-func (n *Nanobot) GetRuntime(ctx context.Context, cfgPath string, opts ...runtime.Options) (*runtime.Runtime, error) {
+func (n *Nanobot) ReadConfig(ctx context.Context, cfgPath string, opts ...runtime.Options) (*types.Config, error) {
 	cfg, _, err := config.Load(ctx, cfgPath, runtime.CompleteOptions(opts...).Profiles...)
+	return cfg, err
+}
+
+func (n *Nanobot) GetRuntime(ctx context.Context, cfgPath string, opts ...runtime.Options) (*runtime.Runtime, error) {
+	cfg, err := n.ReadConfig(ctx, cfgPath, opts...)
 	if err != nil {
 		return nil, err
 	}
-	//if dir != "." {
-	//	if err := os.Chdir(dir); err != nil {
-	//		return nil, fmt.Errorf("failed to change directory to %s: %w", dir, err)
-	//	}
-	//}
 
 	return runtime.NewRuntime(n.llmConfig(), *cfg, opts...), nil
 }

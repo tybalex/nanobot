@@ -95,6 +95,16 @@ func (r *Run) getRoots() ([]mcp.Root, error) {
 	return roots, nil
 }
 
+func (r *Run) reload(ctx context.Context, client *mcp.Client, runtime *runtime.Runtime, cfgPath string, runtimeOpt runtime.Options) error {
+	newCfg, err := r.n.ReadConfig(ctx, cfgPath, runtimeOpt)
+	if err != nil {
+		return fmt.Errorf("failed to reload config: %w", err)
+	}
+
+	runtime.Reload(*newCfg)
+	return client.Session.Exchange(ctx, "initialize", mcp.InitializeRequest{}, &mcp.InitializeResult{})
+}
+
 func (r *Run) Run(cmd *cobra.Command, args []string) error {
 	var (
 		runtimeOpt runtime.Options
@@ -165,7 +175,10 @@ func (r *Run) Run(cmd *cobra.Command, args []string) error {
 	})
 	eg.Go(func() error {
 		defer cancel()
-		return chat.Chat(ctx, r.ListenAddress, runtimeOpt.Confirmations, r.AutoConfirm, prompt, r.Output)
+		return chat.Chat(ctx, r.ListenAddress, runtimeOpt.Confirmations, r.AutoConfirm, prompt, r.Output,
+			func(client *mcp.Client) error {
+				return r.reload(ctx, client, runtime, args[0], runtimeOpt)
+			})
 	})
 	return eg.Wait()
 }

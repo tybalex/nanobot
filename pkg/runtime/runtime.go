@@ -19,7 +19,8 @@ import (
 type Runtime struct {
 	*tools.Service
 	config    types.Config
-	sessionID string
+	llmConfig llm.Config
+	opt       Options
 }
 
 type Options struct {
@@ -56,9 +57,17 @@ func NewRuntime(cfg llm.Config, config types.Config, opts ...Options) *Runtime {
 	registry.SetSampler(sampler)
 
 	return &Runtime{
-		config:  config,
-		Service: registry,
+		config:    config,
+		Service:   registry,
+		llmConfig: cfg,
+		opt:       opt,
 	}
+}
+
+func (r *Runtime) Reload(cfg types.Config) {
+	newRuntime := NewRuntime(r.llmConfig, cfg, r.opt)
+	r.config = cfg
+	r.Service = newRuntime.Service
 }
 
 func (r *Runtime) GetConfig() types.Config {

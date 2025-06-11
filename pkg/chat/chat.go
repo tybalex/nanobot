@@ -19,7 +19,8 @@ import (
 	"github.com/nanobot-ai/nanobot/pkg/uuid"
 )
 
-func Chat(ctx context.Context, listenAddress string, confirmations *confirm.Service, autoConfirm bool, prompt, output string) error {
+func Chat(ctx context.Context, listenAddress string, confirmations *confirm.Service,
+	autoConfirm bool, prompt, output string, reload func(*mcp.Client) error) error {
 	progressToken := uuid.String()
 
 	promptDone, promptDoneCancel := context.WithCancel(ctx)
@@ -88,6 +89,15 @@ func Chat(ctx context.Context, listenAddress string, confirmations *confirm.Serv
 		line, err := prompter.ReadInput()
 		if err != nil {
 			return err
+		}
+
+		if strings.Fields(line)[0] == "/reload" {
+			if err := reload(c); err != nil {
+				log.Errorf(ctx, "Error reloading: %v", err)
+			} else {
+				log.Infof(ctx, "Reloaded successfully.")
+			}
+			continue
 		}
 
 		if strings.TrimSpace(line) == "" {
