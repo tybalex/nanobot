@@ -221,6 +221,7 @@ COPY %s /mcp`, baseImage, uid, gid, srcPath))
 }
 
 func dockerFileToTar(dockerfile string) io.Reader {
+	dockerfile = strings.ReplaceAll(dockerfile, "${NANOBOT_IMAGE}", version.BaseImage)
 	var buf bytes.Buffer
 	t := tar.NewWriter(&buf)
 	if err := t.WriteHeader(&tar.Header{
