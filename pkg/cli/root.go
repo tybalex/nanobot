@@ -128,6 +128,7 @@ func (n *Nanobot) loadEnv() (map[string]string, error) {
 	cwd, err := os.Getwd()
 	if err == nil {
 		env["PWD"] = cwd
+		env["CWD"] = cwd
 	}
 
 	defaultFile := n.EnvFile == ""
