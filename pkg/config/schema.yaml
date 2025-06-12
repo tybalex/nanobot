@@ -267,7 +267,7 @@ definitions:
           The URL of the MCP Server. This is used to connect to the MCP Server
           and access its resources. If a command is specified also, this URL should refer to localhost
           and should use a port from the port array so that Nanobot can randomly select a port to use.
-      baseImage:
+      image:
         type: string
         description: |
           The base Docker image to use for the MCP Server.
@@ -276,6 +276,12 @@ definitions:
         description: |
           Whether the MCP Server should run in an unsandboxed mode. If true, the MCP Server
           will not be isolated and can access the host system. Defaults to false if unset.
+      workdir:
+        type: string
+        description: |
+          The working directory for the MCP Server. This is where the MCP Server will run
+          and where it will look for files and resources. Set to ${CWD} to match the current working directory
+          of nanobot.
       ports:
         type: array
         items:
@@ -356,6 +362,24 @@ definitions:
         description: |
           A unique identifier for the step. This is used to reference the step
           in other parts of the configuration.
+      set:
+        type: object
+        description: |
+          Values that should be set in the current context
+        additionalProperties: true
+      parallel:
+        type: boolean
+        description: |
+          If true each loop of of forEach will be run in parallel. forEach must
+          be set for this field to have any meaning. When loops are run in the parallel
+          the output from nested steps will not be see in subsequent steps. The only
+          data returned is the aggregrated output of each loop, but not the values of
+          each intermediate step in a loop.
+      while:
+        type: string
+        description: |
+          If this expression evaluates to true the step will continue to be executed
+          until the expression evaluates to false.
       forEach:
         oneOf:
           - type: string

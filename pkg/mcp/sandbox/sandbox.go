@@ -30,6 +30,7 @@ type Command struct {
 	ReversePorts []int
 	Roots        []Root
 	Command      string
+	Workdir      string
 	Args         []string
 	Env          []string
 	BaseImage    string
@@ -129,16 +130,24 @@ func NewCmd(ctx context.Context, sandbox Command) (*Cmd, error) {
 	for _, k := range sandbox.Env {
 		dockerArgs = append(dockerArgs, "-e", k)
 	}
+
+	workdir := sandbox.Workdir
 	for _, root := range sandbox.Roots {
-		if root.Name == "cwd" && sandbox.Source.Repo == "" && sandbox.Source.SubPath == "" {
-			dockerArgs = append(dockerArgs, "-w", root.Path)
+		if root.Name == "cwd" && sandbox.Source.Repo == "" && sandbox.Source.SubPath == "" && workdir == "" {
+			workdir = root.Path
 		}
 		dockerArgs = append(dockerArgs, "-v", root.Path+":"+root.Path)
+	}
+	if workdir != "" {
+		dockerArgs = append(dockerArgs, "-w", workdir)
 	}
 	for _, port := range sandbox.PublishPorts {
 		dockerArgs = append(dockerArgs, "-p", "127.0.0.1:"+port+":"+port)
 	}
-	dockerArgs = append(dockerArgs, "--", baseImage, sandbox.Command)
+	dockerArgs = append(dockerArgs, "--", baseImage)
+	if sandbox.Command != "" {
+		dockerArgs = append(dockerArgs, sandbox.Command)
+	}
 	dockerArgs = append(dockerArgs, sandbox.Args...)
 
 	ctx, cancel := context.WithCancel(ctx)

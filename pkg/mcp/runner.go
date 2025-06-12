@@ -89,9 +89,10 @@ func (r *runner) newCommand(ctx context.Context, currentEnv map[string]string, r
 		ReversePorts: config.ReversePorts,
 		Roots:        rootPaths,
 		Command:      command,
+		Workdir:      envvar.ReplaceString(config.Env, config.Workdir),
 		Args:         args,
 		Env:          slices.Collect(maps.Keys(config.Env)),
-		BaseImage:    config.BaseImage,
+		BaseImage:    config.Image,
 		Dockerfile:   config.Dockerfile,
 		Source:       sandbox.Source(config.Source),
 	})

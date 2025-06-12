@@ -59,7 +59,7 @@ func (c ClientOption) Merge(other ClientOption) (result ClientOption) {
 }
 
 type Server struct {
-	BaseImage    string            `json:"baseImage,omitempty"`
+	Image        string            `json:"image,omitempty"`
 	Dockerfile   string            `json:"dockerfile,omitempty"`
 	Source       ServerSource      `json:"source,omitempty"`
 	Unsandboxed  bool              `json:"unsandboxed,omitempty"`
@@ -69,6 +69,7 @@ type Server struct {
 	BaseURL      string            `json:"url,omitempty"`
 	Ports        []string          `json:"ports,omitempty"`
 	ReversePorts []int             `json:"reversePorts"`
+	Workdir      string            `json:"workdir,omitempty"`
 	Headers      map[string]string `json:"headers,omitempty"`
 }
 

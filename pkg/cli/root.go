@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/nanobot-ai/nanobot/pkg/cmd"
+	"github.com/nanobot-ai/nanobot/pkg/complete"
 	"github.com/nanobot-ai/nanobot/pkg/config"
 	"github.com/nanobot-ai/nanobot/pkg/llm"
 	"github.com/nanobot-ai/nanobot/pkg/llm/anthropic"
@@ -44,6 +45,7 @@ type Nanobot struct {
 	AnthropicAPIKey  string            `usage:"Anthropic API key" env:"ANTHROPIC_API_KEY" name:"anthropic-api-key"`
 	AnthropicBaseURL string            `usage:"Anthropic API URL" env:"ANTHROPIC_BASE_URL" name:"anthropic-base-url"`
 	AnthropicHeaders map[string]string `usage:"Anthropic API headers" env:"ANTHROPIC_HEADERS" name:"anthropic-headers"`
+	MaxConcurrency   int               `usage:"The maximum number of concurrent tasks in a parallel loop" default:"10"`
 	Chdir            string            `usage:"Change directory to this path before running the nanobot" default:"." short:"C"`
 
 	env map[string]string
@@ -166,7 +168,7 @@ func (n *Nanobot) loadEnv() (map[string]string, error) {
 }
 
 func (n *Nanobot) ReadConfig(ctx context.Context, cfgPath string, opts ...runtime.Options) (*types.Config, error) {
-	cfg, _, err := config.Load(ctx, cfgPath, runtime.CompleteOptions(opts...).Profiles...)
+	cfg, _, err := config.Load(ctx, cfgPath, complete.Complete(opts...).Profiles...)
 	return cfg, err
 }
 

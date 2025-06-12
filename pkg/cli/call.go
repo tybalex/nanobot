@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/nanobot-ai/nanobot/pkg/chat"
+	"github.com/nanobot-ai/nanobot/pkg/runtime"
 	"github.com/spf13/cobra"
 )
 
@@ -37,7 +38,9 @@ func (e *Call) Customize(cmd *cobra.Command) {
 }
 
 func (e *Call) Run(cmd *cobra.Command, args []string) error {
-	runtime, err := e.n.GetRuntime(cmd.Context(), args[0])
+	runtime, err := e.n.GetRuntime(cmd.Context(), args[0], runtime.Options{
+		MaxConcurrency: e.n.MaxConcurrency,
+	})
 	if err != nil {
 		return err
 	}

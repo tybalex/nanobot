@@ -101,6 +101,7 @@ type Session struct {
 	sessionID          string
 	Parent             *Session
 	attributes         map[string]any
+	lock               sync.Mutex
 }
 
 const SessionEnvMapKey = "env"
@@ -125,6 +126,8 @@ func (s *Session) Set(key string, value any) {
 	if s == nil {
 		return
 	}
+	s.lock.Lock()
+	defer s.lock.Unlock()
 	if s.attributes == nil {
 		s.attributes = make(map[string]any)
 	}
@@ -135,6 +138,8 @@ func (s *Session) Get(key string) any {
 	if s == nil {
 		return nil
 	}
+	s.lock.Lock()
+	defer s.lock.Unlock()
 	return s.attributes[key]
 }
 

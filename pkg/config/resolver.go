@@ -80,12 +80,17 @@ func (r *resource) SourceRel(source mcp.ServerSource) (mcp.ServerSource, error) 
 		if err != nil {
 			return mcp.ServerSource{}, fmt.Errorf("error getting current working directory for %s: %w", r, err)
 		}
+		cwd, err = filepath.Abs(cwd)
+		if err != nil {
+			return mcp.ServerSource{}, fmt.Errorf("error getting absolute path for %s: %w", cwd, err)
+		}
 		subPath := source.SubPath
 		for strings.HasPrefix(subPath, "../") {
 			subPath = strings.TrimPrefix(subPath, "../")
 			cwd = filepath.Dir(cwd)
 		}
 
+		source.SubPath = subPath
 		source.Repo = cwd
 		return source, nil
 	case "git":

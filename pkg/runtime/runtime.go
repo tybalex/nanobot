@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/nanobot-ai/nanobot/pkg/agents"
+	"github.com/nanobot-ai/nanobot/pkg/complete"
 	"github.com/nanobot-ai/nanobot/pkg/confirm"
 	"github.com/nanobot-ai/nanobot/pkg/llm"
 	"github.com/nanobot-ai/nanobot/pkg/mcp"
@@ -24,31 +25,26 @@ type Runtime struct {
 }
 
 type Options struct {
-	Confirmations *confirm.Service
-	Roots         []mcp.Root
-	Profiles      []string
+	Confirmations  *confirm.Service
+	Roots          []mcp.Root
+	Profiles       []string
+	MaxConcurrency int
 }
 
-func CompleteOptions(opts ...Options) Options {
-	var options Options
-	for _, opt := range opts {
-		if opt.Confirmations != nil {
-			if options.Confirmations != nil {
-				panic("multiple confirmation services provided")
-			}
-			options.Confirmations = opt.Confirmations
-		}
-		options.Profiles = append(options.Profiles, opt.Profiles...)
-		options.Roots = append(options.Roots, opt.Roots...)
-	}
-	return options
+func (o Options) Merge(other Options) (result Options) {
+	result.Confirmations = complete.Last(o.Confirmations, other.Confirmations)
+	result.MaxConcurrency = complete.Last(o.MaxConcurrency, other.MaxConcurrency)
+	result.Profiles = append(o.Profiles, other.Profiles...)
+	result.Roots = append(o.Roots, other.Roots...)
+	return
 }
 
 func NewRuntime(cfg llm.Config, config types.Config, opts ...Options) *Runtime {
-	opt := CompleteOptions(opts...)
+	opt := complete.Complete(opts...)
 	completer := llm.NewClient(cfg, config)
 	registry := tools.NewToolsService(config, tools.RegistryOptions{
-		Roots: opt.Roots,
+		Roots:       opt.Roots,
+		Concurrency: opt.MaxConcurrency,
 	})
 	agents := agents.New(completer, registry, opt.Confirmations, config)
 	sampler := sampling.NewSampler(config, agents)

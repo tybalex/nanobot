@@ -36,13 +36,14 @@ func TestSchema(t *testing.T) {
 	"mcpServers": {
 		"server1": {
 			"command": "command1",
+			"workdir": "/path/to/workdir",
 			"args": ["arg1", "arg2"],
 			"url": "http://example.com",
 			"env": {
 				"env1": "value1",
 				"env2": "value2"
 			},
-			"baseImage": "an image",
+			"image": "an image",
 			"dockerfile": "Dockerfile content",
 			"source": {
 				"repo": ".",
@@ -117,7 +118,7 @@ func TestSchema(t *testing.T) {
 					}
 				}
 			},
-			"truncation": true,
+			"truncation": "auto",
 			"maxTokens": 100,
 			"aliases": ["alias1", "alias2"],
 			"cost": 0.1,
@@ -198,10 +199,19 @@ func TestSchema(t *testing.T) {
 				{
 					"id": "step1",
 					"input": "a string",
-					"flow": "tool1"
+					"flow": "tool1",
+					"while": "an expression",
+					"set": {
+						"key1": {
+							"something": 1
+						},
+						"key2": null,
+						"key3": 4
+					}
 				},
 				{
 					"id": "step1",
+					"parallel": true,
 					"forEach": "expr",
 					"forEachVar": "item",
 					"input": "a string",

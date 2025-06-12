@@ -116,15 +116,18 @@ func (f Flow) validate(flowName string, c Config) error {
 }
 
 type Step struct {
-	ID         string    `json:"id,omitempty"`
-	Agent      AgentCall `json:"agent,omitempty"`
-	Tool       string    `json:"tool,omitempty"`
-	Flow       string    `json:"flow,omitempty"`
-	If         string    `json:"if,omitempty"`
-	ForEach    any       `json:"forEach,omitempty"`
-	ForEachVar string    `json:"forEachVar,omitempty"`
-	Input      any       `json:"input,omitempty"`
-	Steps      []Step    `json:"steps,omitzero"`
+	ID         string         `json:"id,omitempty"`
+	Agent      AgentCall      `json:"agent,omitempty"`
+	Tool       string         `json:"tool,omitempty"`
+	Flow       string         `json:"flow,omitempty"`
+	If         string         `json:"if,omitempty"`
+	While      string         `json:"while,omitempty"`
+	ForEach    any            `json:"forEach,omitempty"`
+	ForEachVar string         `json:"forEachVar,omitempty"`
+	Set        map[string]any `json:"set,omitempty"`
+	Input      any            `json:"input,omitempty"`
+	Parallel   bool
+	Steps      []Step `json:"steps,omitzero"`
 }
 
 func ignoreEmptyStringList(s string) []string {

@@ -120,6 +120,7 @@ func (r *Run) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	runtimeOpt.Roots = roots
+	runtimeOpt.MaxConcurrency = r.n.MaxConcurrency
 
 	if r.MCP {
 		runtime, err := r.n.GetRuntime(cmd.Context(), args[0], runtimeOpt)

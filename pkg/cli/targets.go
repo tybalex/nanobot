@@ -61,10 +61,10 @@ func (t *Targets) Run(cmd *cobra.Command, args []string) error {
 		for _, t := range tool.Tools {
 			target := tool.Server
 			targetType := "agent"
-			if _, ok := c.MCPServers[t.Name]; ok {
+			if _, ok := c.MCPServers[target]; ok {
 				targetType = "tool"
 				target = target + "/" + t.Name
-			} else if _, ok := c.Flows[t.Name]; ok {
+			} else if _, ok := c.Flows[target]; ok {
 				targetType = "flow"
 			}
 

@@ -41,6 +41,10 @@ func EvalBool(ctx context.Context, env map[string]string, data map[string]any, e
 	}
 }
 
+func EvalAny(ctx context.Context, env map[string]string, data map[string]any, expr any) (any, error) {
+	return translate(ctx, env, data, expr)
+}
+
 func EvalObject(ctx context.Context, env map[string]string, data map[string]any, expr any) (any, error) {
 	ret, err := translate(ctx, env, data, expr)
 	if err != nil {

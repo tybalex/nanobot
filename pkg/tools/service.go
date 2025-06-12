@@ -19,11 +19,12 @@ import (
 )
 
 type Service struct {
-	servers    map[string]map[string]*mcp.Client
-	roots      []mcp.Root
-	config     types.Config
-	serverLock sync.Mutex
-	sampler    Sampler
+	servers     map[string]map[string]*mcp.Client
+	roots       []mcp.Root
+	config      types.Config
+	serverLock  sync.Mutex
+	sampler     Sampler
+	concurrency int
 }
 
 type Sampler interface {
@@ -31,25 +32,30 @@ type Sampler interface {
 }
 
 type RegistryOptions struct {
-	Roots []mcp.Root
+	Roots       []mcp.Root
+	Concurrency int
 }
 
-func completeOptions(opts ...RegistryOptions) RegistryOptions {
-	var options RegistryOptions
-	for _, opt := range opts {
-		options.Roots = append(options.Roots, opt.Roots...)
+func (r RegistryOptions) Merge(other RegistryOptions) (result RegistryOptions) {
+	result.Roots = append(r.Roots, other.Roots...)
+	result.Concurrency = complete.Last(r.Concurrency, other.Concurrency)
+	return result
+}
+
+func (r RegistryOptions) Complete() RegistryOptions {
+	if r.Concurrency == 0 {
+		r.Concurrency = 10
 	}
-	if options.Roots == nil {
-		options.Roots = []mcp.Root{}
-	}
-	return options
+	return r
 }
 
 func NewToolsService(config types.Config, opts ...RegistryOptions) *Service {
+	opt := complete.Complete(opts...)
 	return &Service{
-		servers: make(map[string]map[string]*mcp.Client),
-		config:  config,
-		roots:   completeOptions(opts...).Roots,
+		servers:     make(map[string]map[string]*mcp.Client),
+		config:      config,
+		roots:       opt.Roots,
+		concurrency: opt.Concurrency,
 	}
 }
 
